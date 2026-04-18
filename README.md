@@ -6,7 +6,6 @@ Bloodwork is a self-hosted web app for importing blood test PDF reports, normali
 
 - Email/password registration and login.
 - Cookie-based auth sessions with per-user data isolation.
-- Bootstrap admin account (`kuweg_admin`) for server-folder import tools.
 - PDF ingest + normalization into a historical table.
 - Dashboard, table view, graphs, import queue with stop controls.
 - Export table as **Excel / CSV / TXT / PDF**.
@@ -48,10 +47,6 @@ Open `http://localhost:5173`.
 ## Auth and roles
 
 - Regular users: upload and manage their own reports.
-- Admin users: same as regular + server data folder endpoints.
-- On startup, backend ensures a bootstrap admin exists:
-  - login: `kuweg_admin`
-  - password: `kuweg_admin`
   - override via env vars `BW_BOOTSTRAP_ADMIN_LOGIN` and `BW_BOOTSTRAP_ADMIN_PASSWORD`.
 
 ## Environment
