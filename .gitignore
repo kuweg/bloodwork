@@ -4,6 +4,7 @@ __pycache__/
 .venv/
 .env
 .env.*
+!.env.example
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
@@ -20,6 +21,7 @@ backend/bloodwork.db
 backend/uploads/
 backend/.env
 backend/.env.*
+!backend/.env.example
 
 # Node
 node_modules/
@@ -28,6 +30,7 @@ frontend/.vite/
 *.tsbuildinfo
 frontend/.env
 frontend/.env.*
+!frontend/.env.example
 frontend/.pnpm-store/
 
 # Editor / OS

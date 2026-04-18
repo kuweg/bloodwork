@@ -1,0 +1,58 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      BW_DATABASE_URL: ${BW_DATABASE_URL}
+      BW_UPLOAD_DIR: ${BW_UPLOAD_DIR}
+      BW_BLOODWORK_DATA_DIR: ${BW_BLOODWORK_DATA_DIR}
+      BW_CORS_ORIGINS: ${BW_CORS_ORIGINS}
+      BW_LLM_PROVIDER: ${BW_LLM_PROVIDER}
+      BW_LLM_API_KEY: ${BW_LLM_API_KEY}
+      BW_LLM_MODEL: ${BW_LLM_MODEL}
+      BW_LLM_TIMEOUT_SECONDS: ${BW_LLM_TIMEOUT_SECONDS}
+      BW_SESSION_SECRET: ${BW_SESSION_SECRET}
+      BW_SESSION_COOKIE_NAME: ${BW_SESSION_COOKIE_NAME}
+      BW_SESSION_TTL_HOURS: ${BW_SESSION_TTL_HOURS}
+      BW_SESSION_SECURE_COOKIE: ${BW_SESSION_SECURE_COOKIE}
+      BW_BOOTSTRAP_ADMIN_LOGIN: ${BW_BOOTSTRAP_ADMIN_LOGIN}
+      BW_BOOTSTRAP_ADMIN_PASSWORD: ${BW_BOOTSTRAP_ADMIN_PASSWORD}
+    volumes:
+      - backend_uploads:/app/uploads
+      - ./blood_work_data:/blood_work_data
+    expose:
+      - "8000"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
+volumes:
+  postgres_data:
+  backend_uploads:
