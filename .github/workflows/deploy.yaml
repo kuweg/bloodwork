@@ -13,6 +13,17 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Validate SSH config
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST || vars.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER || vars.VPS_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          [ -n "$VPS_HOST" ] || { echo "::error::Missing VPS_HOST (secret or variable)."; exit 1; }
+          [ -n "$VPS_USER" ] || { echo "::error::Missing VPS_USER (secret or variable)."; exit 1; }
+          [ -n "$VPS_SSH_KEY" ] || { echo "::error::Missing VPS_SSH_KEY secret."; exit 1; }
+
       - name: Deploy with Docker Compose
         uses: appleboy/ssh-action@v1.2.0
         env:
@@ -37,10 +48,10 @@ jobs:
           VITE_DEFAULT_CONCURRENCY: ${{ secrets.VITE_DEFAULT_CONCURRENCY }}
           VITE_FOLDER_IMPORT_MAX_CONCURRENCY: ${{ secrets.VITE_FOLDER_IMPORT_MAX_CONCURRENCY }}
         with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
+          host: ${{ secrets.VPS_HOST || vars.VPS_HOST }}
+          username: ${{ secrets.VPS_USER || vars.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          port: 22
+          port: ${{ secrets.VPS_PORT || vars.VPS_PORT || '22' }}
           script_stop: true
           envs: APP_DIR,POSTGRES_DB,POSTGRES_USER,POSTGRES_PASSWORD,BW_DATABASE_URL,BW_UPLOAD_DIR,BW_BLOODWORK_DATA_DIR,BW_CORS_ORIGINS,BW_LLM_PROVIDER,BW_LLM_API_KEY,BW_LLM_MODEL,BW_LLM_TIMEOUT_SECONDS,BW_SESSION_SECRET,BW_SESSION_COOKIE_NAME,BW_SESSION_TTL_HOURS,BW_SESSION_SECURE_COOKIE,BW_BOOTSTRAP_ADMIN_LOGIN,BW_BOOTSTRAP_ADMIN_PASSWORD,VITE_DEFAULT_CONCURRENCY,VITE_FOLDER_IMPORT_MAX_CONCURRENCY
           script: |
