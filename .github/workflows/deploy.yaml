@@ -63,24 +63,16 @@ jobs:
             APP_DIR="${APP_DIR:-/opt/bloodwork}"
             REPO_URL="https://github.com/${{ github.repository }}.git"
 
-            required_vars=(
-              POSTGRES_DB
-              POSTGRES_USER
-              POSTGRES_PASSWORD
-              BW_DATABASE_URL
-              BW_CORS_ORIGINS
-              BW_LLM_PROVIDER
-              BW_LLM_API_KEY
-              BW_SESSION_SECRET
-              BW_BOOTSTRAP_ADMIN_LOGIN
-              BW_BOOTSTRAP_ADMIN_PASSWORD
-            )
-            for var_name in "${required_vars[@]}"; do
-              if [ -z "${!var_name:-}" ]; then
-                echo "::error::Missing required secret: ${var_name}"
-                exit 1
-              fi
-            done
+            [ -n "${POSTGRES_DB:-}" ] || { echo "::error::Missing required secret: POSTGRES_DB"; exit 1; }
+            [ -n "${POSTGRES_USER:-}" ] || { echo "::error::Missing required secret: POSTGRES_USER"; exit 1; }
+            [ -n "${POSTGRES_PASSWORD:-}" ] || { echo "::error::Missing required secret: POSTGRES_PASSWORD"; exit 1; }
+            [ -n "${BW_DATABASE_URL:-}" ] || { echo "::error::Missing required secret: BW_DATABASE_URL"; exit 1; }
+            [ -n "${BW_CORS_ORIGINS:-}" ] || { echo "::error::Missing required secret: BW_CORS_ORIGINS"; exit 1; }
+            [ -n "${BW_LLM_PROVIDER:-}" ] || { echo "::error::Missing required secret: BW_LLM_PROVIDER"; exit 1; }
+            [ -n "${BW_LLM_API_KEY:-}" ] || { echo "::error::Missing required secret: BW_LLM_API_KEY"; exit 1; }
+            [ -n "${BW_SESSION_SECRET:-}" ] || { echo "::error::Missing required secret: BW_SESSION_SECRET"; exit 1; }
+            [ -n "${BW_BOOTSTRAP_ADMIN_LOGIN:-}" ] || { echo "::error::Missing required secret: BW_BOOTSTRAP_ADMIN_LOGIN"; exit 1; }
+            [ -n "${BW_BOOTSTRAP_ADMIN_PASSWORD:-}" ] || { echo "::error::Missing required secret: BW_BOOTSTRAP_ADMIN_PASSWORD"; exit 1; }
 
             BW_UPLOAD_DIR="${BW_UPLOAD_DIR:-./uploads}"
             BW_BLOODWORK_DATA_DIR="${BW_BLOODWORK_DATA_DIR:-/blood_work_data}"
