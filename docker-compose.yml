@@ -47,6 +47,9 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_DEFAULT_CONCURRENCY: ${VITE_DEFAULT_CONCURRENCY}
+        VITE_FOLDER_IMPORT_MAX_CONCURRENCY: ${VITE_FOLDER_IMPORT_MAX_CONCURRENCY}
     restart: unless-stopped
     depends_on:
       - backend

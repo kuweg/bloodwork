@@ -68,6 +68,11 @@ Backend settings use `BW_` prefix. Common variables:
 - `BW_BOOTSTRAP_ADMIN_LOGIN`
 - `BW_BOOTSTRAP_ADMIN_PASSWORD`
 
+Frontend build-time variables:
+
+- `VITE_DEFAULT_CONCURRENCY`
+- `VITE_FOLDER_IMPORT_MAX_CONCURRENCY`
+
 ## Deploy with Docker Compose
 
 1. Create env file from template:
@@ -83,6 +88,7 @@ cp .env.example .env
 - real `BW_CORS_ORIGINS` (your public frontend URL)
 - real `BW_BOOTSTRAP_ADMIN_PASSWORD`
 - LLM settings (`BW_LLM_PROVIDER`, `BW_LLM_API_KEY`, optional `BW_LLM_MODEL`)
+- frontend queue settings (`VITE_DEFAULT_CONCURRENCY`, `VITE_FOLDER_IMPORT_MAX_CONCURRENCY`)
 
 3. Build and run:
 

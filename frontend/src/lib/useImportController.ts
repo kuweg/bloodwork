@@ -23,7 +23,15 @@ export interface Job {
 
 const CONCURRENCY_KEY = "bloodwork.concurrency";
 const ADMIN_ONLY_ERROR = "Server data folder is available to admin only.";
-const FOLDER_IMPORT_MAX_CONCURRENCY = 2;
+const DEFAULT_FOLDER_IMPORT_MAX_CONCURRENCY = 6;
+
+function resolveFolderImportMaxConcurrency(): number {
+  const raw = Number(import.meta.env.VITE_FOLDER_IMPORT_MAX_CONCURRENCY);
+  if (Number.isFinite(raw) && raw >= 1) return Math.floor(raw);
+  return DEFAULT_FOLDER_IMPORT_MAX_CONCURRENCY;
+}
+
+const FOLDER_IMPORT_MAX_CONCURRENCY = resolveFolderImportMaxConcurrency();
 
 export const CONCURRENCY_OPTIONS = [1, 3, 5, 8, 10, 15, 20] as const;
 export type Concurrency = (typeof CONCURRENCY_OPTIONS)[number];
