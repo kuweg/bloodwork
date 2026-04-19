@@ -66,6 +66,15 @@ jobs:
               git clone "$REPO_URL" "$APP_DIR"
             fi
 
+            # Ensure deploy user can update the repository files.
+            if [ ! -w "$APP_DIR/.git" ]; then
+              if command -v sudo >/dev/null 2>&1; then
+                sudo chown -R "$(id -un)":"$(id -gn)" "$APP_DIR"
+              else
+                chown -R "$(id -un)":"$(id -gn)" "$APP_DIR"
+              fi
+            fi
+
             cd "$APP_DIR"
             git config --global --add safe.directory "$APP_DIR"
             git fetch --all --prune
