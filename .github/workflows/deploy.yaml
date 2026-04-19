@@ -1,0 +1,89 @@
+name: Deploy To VPS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy with Docker Compose
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          APP_DIR: ${{ secrets.APP_DIR }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          BW_DATABASE_URL: ${{ secrets.BW_DATABASE_URL }}
+          BW_UPLOAD_DIR: ${{ secrets.BW_UPLOAD_DIR }}
+          BW_BLOODWORK_DATA_DIR: ${{ secrets.BW_BLOODWORK_DATA_DIR }}
+          BW_CORS_ORIGINS: ${{ secrets.BW_CORS_ORIGINS }}
+          BW_LLM_PROVIDER: ${{ secrets.BW_LLM_PROVIDER }}
+          BW_LLM_API_KEY: ${{ secrets.BW_LLM_API_KEY }}
+          BW_LLM_MODEL: ${{ secrets.BW_LLM_MODEL }}
+          BW_LLM_TIMEOUT_SECONDS: ${{ secrets.BW_LLM_TIMEOUT_SECONDS }}
+          BW_SESSION_SECRET: ${{ secrets.BW_SESSION_SECRET }}
+          BW_SESSION_COOKIE_NAME: ${{ secrets.BW_SESSION_COOKIE_NAME }}
+          BW_SESSION_TTL_HOURS: ${{ secrets.BW_SESSION_TTL_HOURS }}
+          BW_SESSION_SECURE_COOKIE: ${{ secrets.BW_SESSION_SECURE_COOKIE }}
+          BW_BOOTSTRAP_ADMIN_LOGIN: ${{ secrets.BW_BOOTSTRAP_ADMIN_LOGIN }}
+          BW_BOOTSTRAP_ADMIN_PASSWORD: ${{ secrets.BW_BOOTSTRAP_ADMIN_PASSWORD }}
+          VITE_DEFAULT_CONCURRENCY: ${{ secrets.VITE_DEFAULT_CONCURRENCY }}
+          VITE_FOLDER_IMPORT_MAX_CONCURRENCY: ${{ secrets.VITE_FOLDER_IMPORT_MAX_CONCURRENCY }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: 22
+          script_stop: true
+          envs: APP_DIR,POSTGRES_DB,POSTGRES_USER,POSTGRES_PASSWORD,BW_DATABASE_URL,BW_UPLOAD_DIR,BW_BLOODWORK_DATA_DIR,BW_CORS_ORIGINS,BW_LLM_PROVIDER,BW_LLM_API_KEY,BW_LLM_MODEL,BW_LLM_TIMEOUT_SECONDS,BW_SESSION_SECRET,BW_SESSION_COOKIE_NAME,BW_SESSION_TTL_HOURS,BW_SESSION_SECURE_COOKIE,BW_BOOTSTRAP_ADMIN_LOGIN,BW_BOOTSTRAP_ADMIN_PASSWORD,VITE_DEFAULT_CONCURRENCY,VITE_FOLDER_IMPORT_MAX_CONCURRENCY
+          script: |
+            set -euo pipefail
+
+            APP_DIR="${APP_DIR:-/opt/bloodwork}"
+            REPO_URL="https://github.com/${{ github.repository }}.git"
+
+            if [ ! -d "$APP_DIR/.git" ]; then
+              mkdir -p "$APP_DIR"
+              git clone "$REPO_URL" "$APP_DIR"
+            fi
+
+            cd "$APP_DIR"
+            git fetch --all --prune
+            git checkout main
+            git reset --hard origin/main
+
+            mkdir -p blood_work_data
+
+            cat > .env <<EOF
+            POSTGRES_DB=${POSTGRES_DB}
+            POSTGRES_USER=${POSTGRES_USER}
+            POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+            BW_DATABASE_URL=${BW_DATABASE_URL}
+            BW_UPLOAD_DIR=${BW_UPLOAD_DIR}
+            BW_BLOODWORK_DATA_DIR=${BW_BLOODWORK_DATA_DIR}
+            BW_CORS_ORIGINS=${BW_CORS_ORIGINS}
+            BW_LLM_PROVIDER=${BW_LLM_PROVIDER}
+            BW_LLM_API_KEY=${BW_LLM_API_KEY}
+            BW_LLM_MODEL=${BW_LLM_MODEL}
+            BW_LLM_TIMEOUT_SECONDS=${BW_LLM_TIMEOUT_SECONDS}
+            BW_SESSION_SECRET=${BW_SESSION_SECRET}
+            BW_SESSION_COOKIE_NAME=${BW_SESSION_COOKIE_NAME}
+            BW_SESSION_TTL_HOURS=${BW_SESSION_TTL_HOURS}
+            BW_SESSION_SECURE_COOKIE=${BW_SESSION_SECURE_COOKIE}
+            BW_BOOTSTRAP_ADMIN_LOGIN=${BW_BOOTSTRAP_ADMIN_LOGIN}
+            BW_BOOTSTRAP_ADMIN_PASSWORD=${BW_BOOTSTRAP_ADMIN_PASSWORD}
+            VITE_DEFAULT_CONCURRENCY=${VITE_DEFAULT_CONCURRENCY}
+            VITE_FOLDER_IMPORT_MAX_CONCURRENCY=${VITE_FOLDER_IMPORT_MAX_CONCURRENCY}
+            EOF
+
+            chmod 600 .env
+
+            docker compose --env-file .env up -d --build --remove-orphans
+            docker compose --env-file .env ps
