@@ -13,6 +13,22 @@ import type {
 
 const BASE = "/api";
 
+function toErrorMessage(status: number, statusText: string, bodyText: string): string {
+  const text = bodyText.trim();
+  const looksLikeHtml = /<html[\s>]/i.test(text) || /<!doctype html>/i.test(text);
+
+  if (status === 504) {
+    return `${status} ${statusText}: Server is processing too long. Please retry.`;
+  }
+  if ((status === 502 || status === 503) && looksLikeHtml) {
+    return `${status} ${statusText}: Backend is temporarily unavailable.`;
+  }
+  if (looksLikeHtml) {
+    return `${status} ${statusText}`;
+  }
+  return `${status} ${statusText}: ${text}`;
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     credentials: "include",
@@ -20,7 +36,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`${res.status} ${res.statusText}: ${text}`);
+    throw new Error(toErrorMessage(res.status, res.statusText, text));
   }
   if (res.status === 204) {
     return undefined as T;
