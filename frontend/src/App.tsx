@@ -389,6 +389,7 @@ export default function App() {
             uploadFiles={importController.uploadFiles}
             importFolderFile={importController.importFolderFile}
             importAllFolder={importController.importAllFolder}
+            retryJob={importController.retryJob}
             stopJob={importController.stopJob}
             stopAll={importController.stopAll}
             clearFinished={importController.clearFinished}

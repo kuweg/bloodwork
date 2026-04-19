@@ -38,6 +38,7 @@ interface Props {
   uploadFiles: (files: File[]) => Promise<void>;
   importFolderFile: (filename: string) => Promise<void>;
   importAllFolder: () => Promise<void>;
+  retryJob: (id: string) => void;
   stopJob: (id: string) => void;
   stopAll: () => void;
   clearFinished: () => void;
@@ -55,6 +56,7 @@ export function Import({
   uploadFiles,
   importFolderFile,
   importAllFolder,
+  retryJob,
   stopJob,
   stopAll,
   clearFinished,
@@ -242,7 +244,7 @@ export function Import({
         ) : (
           <ul className="space-y-2">
             {jobs.map((job) => (
-              <JobRow key={job.id} job={job} onStop={stopJob} />
+              <JobRow key={job.id} job={job} onStop={stopJob} onRetry={retryJob} />
             ))}
           </ul>
         )}
@@ -304,9 +306,18 @@ function useElapsed(since: number | undefined, active: boolean): number {
   return since == null ? 0 : now - since;
 }
 
-function JobRow({ job, onStop }: { job: Job; onStop: (id: string) => void }) {
+function JobRow({
+  job,
+  onStop,
+  onRetry,
+}: {
+  job: Job;
+  onStop: (id: string) => void;
+  onRetry: (id: string) => void;
+}) {
   const active = job.status === "processing";
   const canStop = job.status === "processing" || job.status === "pending";
+  const canRetry = job.status === "error";
   const elapsed = useElapsed(job.startedAt, active);
   const totalMs =
     job.startedAt != null && job.endedAt != null
@@ -346,6 +357,16 @@ function JobRow({ job, onStop }: { job: Job; onStop: (id: string) => void }) {
                 <span>·</span>
                 <span>{formatElapsed(totalMs)}</span>
               </div>
+              {canRetry && (
+                <button
+                  onClick={() => onRetry(job.id)}
+                  className="rounded border border-blue-300 p-1 text-blue-700 hover:bg-blue-50"
+                  title="Retry this file"
+                  aria-label="Retry this file"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                </button>
+              )}
               {canStop && (
                 <button
                   onClick={() => onStop(job.id)}
