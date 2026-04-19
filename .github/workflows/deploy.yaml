@@ -84,27 +84,8 @@ jobs:
             VITE_DEFAULT_CONCURRENCY="${VITE_DEFAULT_CONCURRENCY:-10}"
             VITE_FOLDER_IMPORT_MAX_CONCURRENCY="${VITE_FOLDER_IMPORT_MAX_CONCURRENCY:-3}"
 
-            if [ ! -d "$APP_DIR/.git" ]; then
-              mkdir -p "$APP_DIR"
-              git clone "$REPO_URL" "$APP_DIR"
-            fi
-
-            # Ensure deploy user can update the repository files.
-            if [ ! -w "$APP_DIR/.git" ]; then
-              CURRENT_UID="$(id -u)"
-              CURRENT_USER="$(id -un)"
-              CURRENT_GROUP="$(id -gn)"
-              case "$CURRENT_UID" in
-                0)
-                  chown -R "$CURRENT_USER":"$CURRENT_GROUP" "$APP_DIR"
-                  ;;
-                *)
-                  echo "::error::Repo is not writable by $CURRENT_USER. Run once on VPS as root:"
-                  echo "chown -R $CURRENT_USER:$CURRENT_GROUP \"$APP_DIR\""
-                  exit 1
-                  ;;
-              esac
-            fi
+            [ -d "$APP_DIR/.git" ] || { mkdir -p "$APP_DIR"; git clone "$REPO_URL" "$APP_DIR"; }
+            [ -w "$APP_DIR/.git" ] || { echo "::error::Repo is not writable by $(id -un). Run once on VPS as root: chown -R $(id -un):$(id -gn) \"$APP_DIR\""; exit 1; }
 
             cd "$APP_DIR"
             git config --global --add safe.directory "$APP_DIR"
@@ -138,10 +119,7 @@ jobs:
 
             chmod 600 .env
 
-            if ! docker compose version >/dev/null 2>&1; then
-              echo "::error::Docker Compose is unavailable for $(id -un). Install Docker Compose and add user to docker group."
-              exit 1
-            fi
+            docker compose version >/dev/null 2>&1 || { echo "::error::Docker Compose is unavailable for $(id -un). Install Docker Compose and add user to docker group."; exit 1; }
 
             docker compose --env-file .env up -d --build --remove-orphans
             docker compose --env-file .env ps
