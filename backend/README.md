@@ -4,6 +4,18 @@ FastAPI service that parses multilingual PDF bloodwork reports and aggregates me
 
 ## Setup
 
+Start Postgres (example):
+
+```bash
+docker run --name bloodwork-pg \
+  -e POSTGRES_DB=bloodwork \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -p 5432:5432 -d postgres:16-alpine
+```
+
+Then run API:
+
 ```bash
 poetry install
 poetry run uvicorn app.main:app --reload
@@ -50,7 +62,7 @@ Adding a new provider: implement the `LlmProvider` protocol (`app/llm/base.py`) 
 
 Env vars are prefixed with `BW_` (loaded from `.env`):
 
-- `BW_DATABASE_URL` — SQLAlchemy URL (default `sqlite+aiosqlite:///./bloodwork.db`)
+- `BW_DATABASE_URL` — SQLAlchemy URL (default `postgresql+asyncpg://postgres:postgres@localhost:5432/bloodwork`)
 - `BW_UPLOAD_DIR` — where uploaded PDFs are stored (default `./uploads`)
 - `BW_BLOODWORK_DATA_DIR` — server folder used by admin-only import endpoints (default `../blood_work_data`)
 - `BW_CORS_ORIGINS` — allowed frontend origins (JSON list)

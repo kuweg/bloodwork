@@ -14,7 +14,7 @@ Bloodwork is a self-hosted web app for importing blood test PDF reports, normali
 
 ## Tech stack
 
-- Backend: FastAPI, SQLAlchemy (async), SQLite (default), Poetry.
+- Backend: FastAPI, SQLAlchemy (async), Postgres (default), Poetry.
 - Frontend: React, TypeScript, Vite, Tailwind.
 - Deployment: Docker Compose (Postgres + backend + frontend/nginx).
 
@@ -27,6 +27,16 @@ blood_work_data/ Local server-side PDF folder for admin imports
 ```
 
 ## Quick start
+
+0. Start Postgres locally (example via Docker):
+
+```bash
+docker run --name bloodwork-pg \
+  -e POSTGRES_DB=bloodwork \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -p 5432:5432 -d postgres:16-alpine
+```
 
 1. Backend
 

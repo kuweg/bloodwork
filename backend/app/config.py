@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     def _blank_to_none(cls, v: object) -> object:
         return None if isinstance(v, str) and v.strip() == "" else v
 
-    database_url: str = "sqlite+aiosqlite:///./bloodwork.db"
+    database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/bloodwork"
     upload_dir: str = "./uploads"
     bloodwork_data_dir: str = "../blood_work_data"
     cors_origins: list[str] = ["http://localhost:5173"]
