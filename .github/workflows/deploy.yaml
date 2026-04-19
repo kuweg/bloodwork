@@ -68,10 +68,14 @@ jobs:
 
             # Ensure deploy user can update the repository files.
             if [ ! -w "$APP_DIR/.git" ]; then
-              if command -v sudo >/dev/null 2>&1; then
-                sudo chown -R "$(id -un)":"$(id -gn)" "$APP_DIR"
-              else
+              if [ "$(id -u)" -eq 0 ]; then
                 chown -R "$(id -un)":"$(id -gn)" "$APP_DIR"
+              elif command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
+                sudo -n chown -R "$(id -un)":"$(id -gn)" "$APP_DIR"
+              else
+                echo "::error::Repo is not writable by $(id -un). Run once on VPS as root:"
+                echo "chown -R $(id -un):$(id -gn) \"$APP_DIR\""
+                exit 1
               fi
             fi
 
@@ -107,5 +111,14 @@ jobs:
 
             chmod 600 .env
 
-            docker compose --env-file .env up -d --build --remove-orphans
-            docker compose --env-file .env ps
+            if docker compose version >/dev/null 2>&1; then
+              DC="docker compose"
+            elif command -v sudo >/dev/null 2>&1 && sudo -n docker compose version >/dev/null 2>&1; then
+              DC="sudo -n docker compose"
+            else
+              echo "::error::Docker Compose is unavailable for $(id -un). Ensure Docker is installed and user is in docker group."
+              exit 1
+            fi
+
+            $DC --env-file .env up -d --build --remove-orphans
+            $DC --env-file .env ps
