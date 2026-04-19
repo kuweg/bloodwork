@@ -173,8 +173,8 @@ export function TableViewer({ reports }: Props) {
 
   if (history.length === 0) {
     return (
-      <div className="p-6">
-        <div className="rounded-lg border border-dashed border-gray-300 bg-white p-16 text-center">
+      <div className="p-4 sm:p-6">
+        <div className="rounded-lg border border-dashed border-gray-300 bg-white p-10 text-center sm:p-16">
           <h2 className="text-xl">Nothing to show</h2>
           <p className="mt-1 text-gray-600">Upload reports to populate the table.</p>
         </div>
@@ -183,10 +183,10 @@ export function TableViewer({ reports }: Props) {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       <div className="mb-6 flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-3xl">Historical Blood Work Data</h1>
+          <h1 className="text-2xl sm:text-3xl">Historical Blood Work Data</h1>
           <div className="text-sm text-gray-600">
             {searchable.length} test{searchable.length === 1 ? "" : "s"} shown
           </div>
@@ -203,7 +203,7 @@ export function TableViewer({ reports }: Props) {
             />
           </label>
 
-          <label className="flex items-center gap-2 lg:col-span-2">
+          <label className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2 lg:col-span-2">
             <span className="shrink-0 text-xs uppercase tracking-wide text-gray-500">From</span>
             <input
               type="date"
@@ -219,7 +219,7 @@ export function TableViewer({ reports }: Props) {
             />
           </label>
 
-          <label className="flex items-center gap-2 lg:col-span-2">
+          <label className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2 lg:col-span-2">
             <span className="shrink-0 text-xs uppercase tracking-wide text-gray-500">To</span>
             <input
               type="date"
@@ -235,7 +235,7 @@ export function TableViewer({ reports }: Props) {
             />
           </label>
 
-          <label className="flex items-center gap-2 lg:col-span-2">
+          <label className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2 lg:col-span-2">
             <span className="shrink-0 text-gray-700">Sort</span>
             <select
               value={sortBy}
@@ -320,14 +320,16 @@ export function TableViewer({ reports }: Props) {
             <table className="w-full min-w-max">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="sticky left-0 z-10 border-b border-gray-200 bg-gray-50 px-6 py-4 text-left">
+                  <th className="sticky left-0 z-10 border-b border-gray-200 bg-gray-50 px-3 py-3 text-left sm:px-6 sm:py-4">
                     Test Name
                   </th>
-                  <th className="border-b border-gray-200 px-6 py-4 text-center">Trend</th>
+                  <th className="border-b border-gray-200 px-3 py-3 text-center sm:px-6 sm:py-4">
+                    Trend
+                  </th>
                   {visibleDates.map((date) => (
                     <th
                       key={date}
-                      className="min-w-[140px] border-b border-gray-200 px-6 py-4 text-center"
+                      className="min-w-[140px] border-b border-gray-200 px-3 py-3 text-center sm:px-6 sm:py-4"
                     >
                       {formatIsoLikeDate(date, {
                         month: "short",
@@ -341,7 +343,7 @@ export function TableViewer({ reports }: Props) {
               <tbody>
                 {searchable.map((test, idx) => (
                   <tr key={test.canonical} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                    <td className="sticky left-0 z-10 border-b border-gray-200 bg-inherit px-6 py-4">
+                    <td className="sticky left-0 z-10 border-b border-gray-200 bg-inherit px-3 py-3 sm:px-6 sm:py-4">
                       <div className="flex items-center gap-1.5 text-gray-900">
                         <span>{test.testName}</span>
                         <button
@@ -362,7 +364,7 @@ export function TableViewer({ reports }: Props) {
                         </div>
                       )}
                     </td>
-                    <td className="border-b border-gray-200 px-6 py-4 text-center">
+                    <td className="border-b border-gray-200 px-3 py-3 text-center sm:px-6 sm:py-4">
                       <Trend test={test} dates={visibleDates} />
                     </td>
                     {visibleDates.map((date) => {
@@ -370,7 +372,7 @@ export function TableViewer({ reports }: Props) {
                       return (
                         <td
                           key={date}
-                          className="border-b border-gray-200 px-6 py-4 text-center"
+                          className="border-b border-gray-200 px-3 py-3 text-center sm:px-6 sm:py-4"
                         >
                           {cell ? (
                             <span
@@ -461,11 +463,11 @@ function TestInfoModal({
       onClick={onClose}
     >
       <div
-        className="max-h-[85vh] w-full max-w-xl overflow-y-auto rounded-lg bg-white p-6"
+        className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-lg bg-white p-4 sm:p-6"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mb-4 flex items-start justify-between">
-          <h2 className="flex items-center gap-2 text-2xl">
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
+          <h2 className="flex items-center gap-2 text-xl sm:text-2xl">
             <BookOpen className="h-5 w-5 text-blue-600" />
             {data?.title || fallbackTitle}
           </h2>

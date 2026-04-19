@@ -99,13 +99,13 @@ export function Graphics({ reports }: Props) {
   };
 
   return (
-    <div className="p-6">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-3xl">Blood Work Graphics</h1>
+    <div className="p-4 sm:p-6">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-2xl sm:text-3xl">Blood Work Graphics</h1>
         <button
           onClick={() => setShowAdd(true)}
           disabled={history.length === 0}
-          className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300 sm:w-auto"
         >
           <Plus className="h-5 w-5" />
           Add Chart
@@ -114,9 +114,9 @@ export function Graphics({ reports }: Props) {
 
       {showAdd && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-6">
-            <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-2xl">Configure New Chart</h2>
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-4 sm:p-6">
+            <div className="mb-6 flex items-center justify-between gap-2">
+              <h2 className="text-xl sm:text-2xl">Configure New Chart</h2>
               <button
                 onClick={() => setShowAdd(false)}
                 className="text-gray-500 hover:text-gray-700"
@@ -128,7 +128,7 @@ export function Graphics({ reports }: Props) {
 
             <div className="mb-6">
               <label className="mb-2 block text-gray-700">Chart Type</label>
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 {(["line", "bar"] as const).map((type) => (
                   <button
                     key={type}
@@ -150,7 +150,7 @@ export function Graphics({ reports }: Props) {
               <label className="mb-2 block text-gray-700">
                 Select Tests to Plot ({(draft.tests ?? []).length} selected)
               </label>
-              <div className="grid max-h-48 grid-cols-2 gap-2 overflow-y-auto rounded-lg border border-gray-200 p-3">
+              <div className="grid max-h-48 grid-cols-1 gap-2 overflow-y-auto rounded-lg border border-gray-200 p-3 sm:grid-cols-2">
                 {history.map((t) => (
                   <label
                     key={t.canonical}
@@ -172,7 +172,7 @@ export function Graphics({ reports }: Props) {
               <label className="mb-2 block text-gray-700">
                 Select Dates ({(draft.dateRange ?? []).length} selected, leave empty for all)
               </label>
-              <div className="grid grid-cols-2 gap-2 rounded-lg border border-gray-200 p-3">
+              <div className="grid grid-cols-1 gap-2 rounded-lg border border-gray-200 p-3 sm:grid-cols-2">
                 {allDates.map((date) => (
                   <label
                     key={date}
@@ -196,7 +196,7 @@ export function Graphics({ reports }: Props) {
               </div>
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex flex-col-reverse gap-3 sm:flex-row">
               <button
                 onClick={addChart}
                 disabled={!draft.tests?.length}
@@ -216,7 +216,7 @@ export function Graphics({ reports }: Props) {
       )}
 
       {charts.length === 0 ? (
-        <div className="py-20 text-center text-gray-500">
+        <div className="py-12 text-center text-gray-500 sm:py-20">
           <p className="mb-2 text-lg">
             {history.length === 0 ? "No measurements available" : "No charts added yet"}
           </p>
@@ -236,9 +236,9 @@ export function Graphics({ reports }: Props) {
             return (
               <div
                 key={chart.id}
-                className="rounded-lg border border-gray-200 bg-white p-5"
+                className="rounded-lg border border-gray-200 bg-white p-4 sm:p-5"
               >
-                <div className="mb-4 flex items-center justify-between">
+                <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
                   <div>
                     <h3 className="mb-1 text-lg">{testNames.join(" vs ")}</h3>
                     <p className="text-sm text-gray-600">

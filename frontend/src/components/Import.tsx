@@ -91,9 +91,9 @@ export function Import({
   );
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-4 sm:p-6">
       <header>
-        <h1 className="mb-1 text-3xl">Import</h1>
+        <h1 className="mb-1 text-2xl sm:text-3xl">Import</h1>
         <p className="text-gray-600">
           {canUseServerFolder
             ? "Upload PDF reports from your computer or pull them from the server-side data folder."
@@ -102,7 +102,7 @@ export function Import({
       </header>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <section className="rounded-lg border border-gray-200 bg-white p-5">
+        <section className="rounded-lg border border-gray-200 bg-white p-4 sm:p-5">
           <h2 className="mb-3 text-lg">Concurrency</h2>
           <select
             value={concurrency}
@@ -123,7 +123,7 @@ export function Import({
           </p>
         </section>
 
-        <section className="rounded-lg border border-gray-200 bg-white p-5">
+        <section className="rounded-lg border border-gray-200 bg-white p-4 sm:p-5">
           <h2 className="mb-3 text-lg">Queue</h2>
           <p className="text-sm text-gray-600">
             {jobs.length === 0
@@ -133,7 +133,7 @@ export function Import({
         </section>
       </div>
 
-      <section className="rounded-lg border border-gray-200 bg-white p-5">
+      <section className="rounded-lg border border-gray-200 bg-white p-4 sm:p-5">
         <h2 className="mb-3 text-lg">Upload from your computer</h2>
         <DropZone
           dragging={dragging}
@@ -145,10 +145,10 @@ export function Import({
       </section>
 
       {canUseServerFolder && (
-        <section className="rounded-lg border border-gray-200 bg-white p-5">
-          <div className="mb-3 flex items-center justify-between">
+        <section className="rounded-lg border border-gray-200 bg-white p-4 sm:p-5">
+          <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-lg">Server data folder</h2>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 onClick={triggerLoad}
                 disabled={loadingFolder}
@@ -193,7 +193,7 @@ export function Import({
                 {folderFiles.map((name) => (
                   <li
                     key={name}
-                    className="flex items-center justify-between px-3 py-2 text-sm"
+                    className="flex flex-col gap-2 px-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between"
                   >
                     <span className="flex items-center gap-2 text-gray-800">
                       <FileText className="h-4 w-4 text-gray-400" />
@@ -214,10 +214,10 @@ export function Import({
       )}
 
       <section>
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-lg">Activity</h2>
           {jobs.length > 0 && (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {pendingCount > 0 && (
                 <button
                   onClick={stopAll}
@@ -238,7 +238,7 @@ export function Import({
           )}
         </div>
         {jobs.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-gray-300 bg-white p-10 text-center text-gray-500">
+          <div className="rounded-lg border border-dashed border-gray-300 bg-white p-6 text-center text-gray-500 sm:p-10">
             Files will appear here with their status.
           </div>
         ) : (
@@ -275,7 +275,7 @@ function DropZone({
       onDragLeave={onDragLeave}
       onDrop={onDrop}
       className={cn(
-        "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-8 transition-colors",
+        "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 text-center transition-colors sm:p-8",
         dragging
           ? "border-blue-500 bg-blue-50"
           : "border-gray-300 bg-gray-50 hover:border-blue-400 hover:bg-blue-50/40",
@@ -345,13 +345,13 @@ function JobRow({
           : "bg-blue-500";
 
   return (
-    <li className="rounded-lg border border-gray-200 bg-white p-3">
+    <li className="rounded-lg border border-gray-200 bg-white p-2.5 sm:p-3">
       <div className="flex items-center gap-3">
         <StatusIcon status={job.status} />
         <div className="min-w-0 flex-1">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <p className="truncate text-sm text-gray-800">{job.name}</p>
-            <div className="flex shrink-0 items-center gap-3">
+            <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
               <div className="flex items-center gap-2 text-xs text-gray-500">
                 <span>{job.source === "upload" ? "upload" : "folder"}</span>
                 <span>·</span>
