@@ -91,13 +91,19 @@ jobs:
 
             # Ensure deploy user can update the repository files.
             if [ ! -w "$APP_DIR/.git" ]; then
-              if [ "$(id -u)" -eq 0 ]; then
-                chown -R "$(id -un)":"$(id -gn)" "$APP_DIR"
-              else
-                echo "::error::Repo is not writable by $(id -un). Run once on VPS as root:"
-                echo "chown -R $(id -un):$(id -gn) \"$APP_DIR\""
-                exit 1
-              fi
+              CURRENT_UID="$(id -u)"
+              CURRENT_USER="$(id -un)"
+              CURRENT_GROUP="$(id -gn)"
+              case "$CURRENT_UID" in
+                0)
+                  chown -R "$CURRENT_USER":"$CURRENT_GROUP" "$APP_DIR"
+                  ;;
+                *)
+                  echo "::error::Repo is not writable by $CURRENT_USER. Run once on VPS as root:"
+                  echo "chown -R $CURRENT_USER:$CURRENT_GROUP \"$APP_DIR\""
+                  exit 1
+                  ;;
+              esac
             fi
 
             cd "$APP_DIR"
