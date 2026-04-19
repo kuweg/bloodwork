@@ -14,6 +14,19 @@ class Settings(BaseSettings):
     def _blank_to_none(cls, v: object) -> object:
         return None if isinstance(v, str) and v.strip() == "" else v
 
+    @field_validator("llm_api_key", mode="before")
+    @classmethod
+    def _placeholder_key_to_none(cls, v: object) -> object:
+        if not isinstance(v, str):
+            return v
+        key = v.strip()
+        lower = key.lower()
+        if lower in {"replace-me", "your-api-key", "change-me"}:
+            return None
+        if lower.startswith("replace-") or lower.startswith("your-"):
+            return None
+        return key
+
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/bloodwork"
     upload_dir: str = "./uploads"
     bloodwork_data_dir: str = "../blood_work_data"
