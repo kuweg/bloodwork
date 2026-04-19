@@ -138,8 +138,8 @@ export function Export({ reports }: Props) {
 
   if (tableRows.length === 0) {
     return (
-      <div className="p-6">
-        <div className="rounded-lg border border-dashed border-gray-300 bg-white p-16 text-center">
+      <div className="p-4 sm:p-6">
+        <div className="rounded-lg border border-dashed border-gray-300 bg-white p-10 text-center sm:p-16">
           <FileSpreadsheet className="mx-auto mb-3 h-8 w-8 text-blue-600" />
           <h2 className="text-xl">No data to export</h2>
           <p className="mt-1 text-gray-600">
@@ -151,19 +151,19 @@ export function Export({ reports }: Props) {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <header className="flex flex-wrap items-center justify-between gap-4">
+    <div className="space-y-6 p-4 sm:p-6">
+      <header className="flex flex-col items-start gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <div>
-          <h1 className="mb-1 text-3xl">Export</h1>
+          <h1 className="mb-1 text-2xl sm:text-3xl">Export</h1>
           <p className="text-gray-600">
             Export the full historical table in your preferred file format.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
           <select
             value={format}
             onChange={(e) => setFormat(e.target.value as ExportFormat)}
-            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm sm:w-auto"
           >
             {FORMAT_OPTIONS.map((opt) => (
               <option key={opt.id} value={opt.id}>
@@ -174,7 +174,7 @@ export function Export({ reports }: Props) {
           <button
             onClick={exportData}
             disabled={exporting}
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-60"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-60 sm:w-auto"
           >
             <Download className="h-4 w-4" />
             {exporting ? "Exporting..." : "Export"}
@@ -182,7 +182,7 @@ export function Export({ reports }: Props) {
         </div>
       </header>
 
-      <section className="rounded-lg border border-gray-200 bg-white p-5">
+      <section className="rounded-lg border border-gray-200 bg-white p-4 sm:p-5">
         <h2 className="mb-3 text-lg">What will be exported</h2>
         <p className="text-sm text-gray-600">
           {tableRows.length} test{tableRows.length === 1 ? "" : "s"} across{" "}

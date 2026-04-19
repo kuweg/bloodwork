@@ -241,7 +241,7 @@ export default function App() {
             <Moon className="h-4 w-4" />
           )}
         </button>
-        <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
           <h1 className="text-xl text-blue-600">Blood Work Analytics</h1>
           <p className="mt-1 text-sm text-gray-600">
             {authMode === "login" ? "Sign in to continue." : "Create an account."}
@@ -307,61 +307,70 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="border-b border-gray-200 bg-white px-6 py-4">
-        <div className="flex items-center justify-between gap-6">
-          <div className="flex items-center gap-6">
-            <h1 className="mr-6 text-xl text-blue-600">Blood Work Analytics</h1>
-            {TABS.map(({ id, label, Icon }) => {
-              const isImport = id === "import";
-              const badge = isImport && inFlight;
-              return (
-                <button
-                  key={id}
-                  onClick={() => setView(id)}
-                  className={cn(
-                    "relative flex items-center gap-2 rounded-lg px-4 py-2 transition-colors",
-                    view === id
-                      ? "bg-blue-600 text-white"
-                      : "text-gray-700 hover:bg-gray-100",
-                  )}
-                >
-                  <Icon className="h-5 w-5" />
-                  {label}
-                  {badge && (
-                    <span className="absolute -right-1 -top-1 h-2.5 w-2.5 animate-pulse rounded-full bg-blue-500" />
-                  )}
-                </button>
-              );
-            })}
+      <nav className="border-b border-gray-200 bg-white px-3 py-3 sm:px-6 sm:py-4">
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h1 className="min-w-0 text-lg text-blue-600 sm:text-xl">
+              Blood Work Analytics
+            </h1>
+            <div className="flex min-w-0 items-center justify-end gap-2 sm:gap-3">
+              <span className="max-w-[45vw] truncate text-xs text-gray-600 sm:max-w-none sm:text-sm">
+                {user.email}
+              </span>
+              <button
+                onClick={toggleTheme}
+                className="rounded-lg border border-gray-300 p-2 text-gray-700 hover:bg-gray-100"
+                title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+                aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+              >
+                {theme === "dark" ? (
+                  <Sun className="h-4 w-4" />
+                ) : (
+                  <Moon className="h-4 w-4" />
+                )}
+              </button>
+              <button
+                onClick={() => void logout()}
+                className="flex items-center gap-2 rounded-lg border border-gray-300 px-2.5 py-2 text-xs text-gray-700 hover:bg-gray-100 sm:px-3 sm:text-sm"
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-600">{user.email}</span>
-            <button
-              onClick={toggleTheme}
-              className="rounded-lg border border-gray-300 p-2 text-gray-700 hover:bg-gray-100"
-              title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
-              aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
-            >
-              {theme === "dark" ? (
-                <Sun className="h-4 w-4" />
-              ) : (
-                <Moon className="h-4 w-4" />
-              )}
-            </button>
-            <button
-              onClick={() => void logout()}
-              className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
-            >
-              <LogOut className="h-4 w-4" />
-              Logout
-            </button>
+
+          <div className="-mx-1 overflow-x-auto px-1 pb-1">
+            <div className="flex min-w-max items-center gap-2">
+              {TABS.map(({ id, label, Icon }) => {
+                const isImport = id === "import";
+                const badge = isImport && inFlight;
+                return (
+                  <button
+                    key={id}
+                    onClick={() => setView(id)}
+                    className={cn(
+                      "relative flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm transition-colors sm:px-4",
+                      view === id
+                        ? "bg-blue-600 text-white"
+                        : "text-gray-700 hover:bg-gray-100",
+                    )}
+                  >
+                    <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
+                    {label}
+                    {badge && (
+                      <span className="absolute -right-1 -top-1 h-2.5 w-2.5 animate-pulse rounded-full bg-blue-500" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </nav>
 
-      <main className="container mx-auto max-w-7xl">
+      <main className="mx-auto w-full max-w-7xl pb-6">
         {error && (
-          <p className="mx-6 mt-4 rounded border border-red-200 bg-red-50 px-4 py-2 text-red-700">
+          <p className="mx-4 mt-4 rounded border border-red-200 bg-red-50 px-4 py-2 text-red-700 sm:mx-6">
             {error}
           </p>
         )}

@@ -81,8 +81,8 @@ export function Dashboard({
 
   if (tests.length === 0) {
     return (
-      <div className="p-6">
-        <div className="rounded-lg border border-dashed border-gray-300 bg-white p-16 text-center">
+      <div className="p-4 sm:p-6">
+        <div className="rounded-lg border border-dashed border-gray-300 bg-white p-10 text-center sm:p-16">
           <Activity className="mx-auto mb-3 h-8 w-8 text-blue-600" />
           <h2 className="text-xl">No measurements yet</h2>
           <p className="mt-1 text-gray-600">
@@ -94,10 +94,10 @@ export function Dashboard({
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 p-4 sm:p-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="mb-1 text-3xl">Blood Work Dashboard</h1>
+          <h1 className="mb-1 text-2xl sm:text-3xl">Blood Work Dashboard</h1>
           <p className="text-gray-600">
             {lastDate ? `Last analysis: ${formatLongDate(lastDate)}` : "No dates detected"}
           </p>
@@ -158,12 +158,12 @@ export function Dashboard({
         {filtered.map((test) => (
           <article
             key={test.id}
-            className="rounded-lg border border-gray-200 bg-white p-5 transition-shadow hover:shadow-md"
+            className="rounded-lg border border-gray-200 bg-white p-4 transition-shadow hover:shadow-md sm:p-5"
           >
             <div className="mb-3 flex items-start justify-between">
               <div className="flex-1">
                 <div className="mb-1 flex items-center gap-1.5">
-                  <h3 className="text-lg">{test.name}</h3>
+                  <h3 className="text-base sm:text-lg">{test.name}</h3>
                   <button
                     onClick={() =>
                       setInfoFor({ canonical: test.canonical, title: test.name })
@@ -181,7 +181,7 @@ export function Dashboard({
               </div>
               <StatusIcon status={test.status} />
             </div>
-            <p className="mb-3 text-3xl text-gray-800">
+            <p className="mb-3 text-2xl text-gray-800 sm:text-3xl">
               {test.value}{" "}
               <span className="text-base text-gray-600">{test.unit}</span>
             </p>
@@ -277,20 +277,20 @@ function SummaryCard({
         if (e.key === "Enter" || e.key === " ") onClick();
       }}
       className={cn(
-        "cursor-pointer rounded-lg border-2 p-6 text-left transition-shadow hover:shadow-lg",
+        "cursor-pointer rounded-lg border-2 p-4 text-left transition-shadow hover:shadow-lg sm:p-6",
         p.bg,
         p.border,
         active && "ring-2 ring-blue-500 ring-offset-2",
       )}
     >
-      <div className="mb-2 flex items-center justify-between">
+      <div className="mb-2 flex items-start justify-between gap-2">
         <span className={p.fg}>{label}</span>
         <div className="flex items-center gap-2">
           {action}
-          <Icon className={cn("h-6 w-6", p.icon)} />
+          <Icon className={cn("h-5 w-5 sm:h-6 sm:w-6", p.icon)} />
         </div>
       </div>
-      <p className={cn("flex items-center gap-2 text-4xl", p.big)}>
+      <p className={cn("flex items-center gap-2 text-3xl sm:text-4xl", p.big)}>
         {loading ? <Loader2 className="h-7 w-7 animate-spin" /> : count}
       </p>
       {hint && <p className={cn("mt-1 text-xs", p.hint)}>{hint}</p>}
@@ -342,9 +342,9 @@ function ChatBar({ providers }: { providers: ProviderInfo | null }) {
   }
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4">
-      <div className="flex items-center gap-2">
-        <div className="relative flex-1">
+    <div className="rounded-lg border border-gray-200 bg-white p-3 sm:p-4">
+      <div className="flex flex-col gap-2 md:flex-row md:items-center">
+        <div className="relative w-full flex-1">
           <input
             ref={inputRef}
             value={question}
@@ -366,7 +366,7 @@ function ChatBar({ providers }: { providers: ProviderInfo | null }) {
           value={model}
           onChange={(e) => setModel(e.target.value)}
           disabled={!!notConfigured || suggested.length === 0}
-          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
+          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 md:w-auto"
           title={providers?.configured ? `Provider: ${providers.configured}` : "No provider"}
         >
           {suggested.length === 0 && <option value="">no models</option>}
@@ -379,7 +379,7 @@ function ChatBar({ providers }: { providers: ProviderInfo | null }) {
         <button
           onClick={submit}
           disabled={!question.trim() || busy || !!notConfigured}
-          className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300 md:w-auto"
         >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           Ask
@@ -394,7 +394,7 @@ function ChatBar({ providers }: { providers: ProviderInfo | null }) {
 
       {answer && !error && (
         <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
-          <div className="mb-1 flex items-center justify-between text-xs text-gray-500">
+          <div className="mb-1 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-500">
             <span>
               Answer · {reportsConsidered} report{reportsConsidered === 1 ? "" : "s"} considered
             </span>
@@ -440,12 +440,12 @@ function AttentionModal({
       onClick={onClose}
     >
       <div
-        className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-6"
+        className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-4 sm:p-6"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mb-4 flex items-start justify-between">
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
           <div>
-            <h2 className="flex items-center gap-2 text-2xl">
+            <h2 className="flex items-center gap-2 text-xl sm:text-2xl">
               <Sparkles className="h-5 w-5 text-yellow-500" />
               Needs Attention
             </h2>
@@ -527,7 +527,7 @@ function AttentionRow({ item }: { item: AttentionItem }) {
       <div className="flex items-start gap-3">
         <span className={cn("mt-1.5 h-2 w-2 shrink-0 rounded-full", p.dot)} />
         <div className="flex-1">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <p className={cn("font-medium", p.fg)}>{item.display_name}</p>
             <span className={cn("text-xs uppercase tracking-wide", p.fg)}>
               {item.severity}
@@ -580,11 +580,11 @@ function TestInfoModal({
       onClick={onClose}
     >
       <div
-        className="max-h-[85vh] w-full max-w-xl overflow-y-auto rounded-lg bg-white p-6"
+        className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-lg bg-white p-4 sm:p-6"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mb-4 flex items-start justify-between">
-          <h2 className="flex items-center gap-2 text-2xl">
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
+          <h2 className="flex items-center gap-2 text-xl sm:text-2xl">
             <BookOpen className="h-5 w-5 text-blue-600" />
             {data?.title || fallbackTitle}
           </h2>
