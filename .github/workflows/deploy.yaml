@@ -63,6 +63,35 @@ jobs:
             APP_DIR="${APP_DIR:-/opt/bloodwork}"
             REPO_URL="https://github.com/${{ github.repository }}.git"
 
+            required_vars=(
+              POSTGRES_DB
+              POSTGRES_USER
+              POSTGRES_PASSWORD
+              BW_DATABASE_URL
+              BW_CORS_ORIGINS
+              BW_LLM_PROVIDER
+              BW_LLM_API_KEY
+              BW_SESSION_SECRET
+              BW_BOOTSTRAP_ADMIN_LOGIN
+              BW_BOOTSTRAP_ADMIN_PASSWORD
+            )
+            for var_name in "${required_vars[@]}"; do
+              if [ -z "${!var_name:-}" ]; then
+                echo "::error::Missing required secret: ${var_name}"
+                exit 1
+              fi
+            done
+
+            BW_UPLOAD_DIR="${BW_UPLOAD_DIR:-./uploads}"
+            BW_BLOODWORK_DATA_DIR="${BW_BLOODWORK_DATA_DIR:-/blood_work_data}"
+            BW_LLM_MODEL="${BW_LLM_MODEL:-}"
+            BW_LLM_TIMEOUT_SECONDS="${BW_LLM_TIMEOUT_SECONDS:-60.0}"
+            BW_SESSION_COOKIE_NAME="${BW_SESSION_COOKIE_NAME:-bw_session}"
+            BW_SESSION_TTL_HOURS="${BW_SESSION_TTL_HOURS:-336}"
+            BW_SESSION_SECURE_COOKIE="${BW_SESSION_SECURE_COOKIE:-true}"
+            VITE_DEFAULT_CONCURRENCY="${VITE_DEFAULT_CONCURRENCY:-10}"
+            VITE_FOLDER_IMPORT_MAX_CONCURRENCY="${VITE_FOLDER_IMPORT_MAX_CONCURRENCY:-3}"
+
             if [ ! -d "$APP_DIR/.git" ]; then
               mkdir -p "$APP_DIR"
               git clone "$REPO_URL" "$APP_DIR"
@@ -72,8 +101,6 @@ jobs:
             if [ ! -w "$APP_DIR/.git" ]; then
               if [ "$(id -u)" -eq 0 ]; then
                 chown -R "$(id -un)":"$(id -gn)" "$APP_DIR"
-              elif command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
-                sudo -n chown -R "$(id -un)":"$(id -gn)" "$APP_DIR"
               else
                 echo "::error::Repo is not writable by $(id -un). Run once on VPS as root:"
                 echo "chown -R $(id -un):$(id -gn) \"$APP_DIR\""
