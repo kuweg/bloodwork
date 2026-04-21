@@ -387,6 +387,7 @@ export default function App() {
         {view === "graphics" && <Graphics reports={reports} />}
         {view === "import" && (
           <Import
+            reports={reports}
             canUseServerFolder={canUseServerFolder}
             concurrency={importController.concurrency}
             onConcurrencyChange={importController.setConcurrency}

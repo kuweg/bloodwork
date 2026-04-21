@@ -21,3 +21,18 @@ export function formatIsoLikeDate(
   if (!parsed) return value;
   return parsed.toLocaleDateString("en-US", options);
 }
+
+export function formatIsoLikeDateTime(
+  value: string,
+  options: Intl.DateTimeFormatOptions = {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  },
+): string {
+  const parsed = parseIsoLikeDate(value);
+  if (!parsed) return value;
+  return parsed.toLocaleString("en-US", options);
+}
