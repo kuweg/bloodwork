@@ -121,6 +121,10 @@ export const api = {
     return request<Report[]>("/results/reports");
   },
 
+  reportPdfUrl(reportId: number): string {
+    return `${BASE}/results/reports/${reportId}/pdf`;
+  },
+
   aggregate(names?: string[]): Promise<AggregatedSeries[]> {
     const qs = names?.length
       ? `?${names.map((n) => `names=${encodeURIComponent(n)}`).join("&")}`

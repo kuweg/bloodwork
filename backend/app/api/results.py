@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -10,6 +11,7 @@ from app.models.orm import Report, User
 from app.models.schemas import AggregatedSeries, ReportRead
 from app.services.auth import get_current_user
 from app.services.aggregator import aggregate_by_type
+from app.services.ingest import resolve_uploaded_pdf_path
 
 router = APIRouter(prefix="/results", tags=["results"])
 
@@ -43,6 +45,24 @@ async def get_report(
     if report is None:
         raise HTTPException(status_code=404, detail="Report not found")
     return report
+
+
+@router.get("/reports/{report_id}/pdf")
+async def get_report_pdf(
+    report_id: int,
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(get_current_user),
+) -> FileResponse:
+    stmt = select(Report).where(Report.id == report_id, Report.user_id == user.id)
+    report = (await session.execute(stmt)).scalar_one_or_none()
+    if report is None:
+        raise HTTPException(status_code=404, detail="Report not found")
+
+    pdf_path = resolve_uploaded_pdf_path(user.id, report.content_hash)
+    if pdf_path is None:
+        raise HTTPException(status_code=404, detail="PDF file not found")
+
+    return FileResponse(path=pdf_path, media_type="application/pdf")
 
 
 @router.get("/aggregate", response_model=list[AggregatedSeries])

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Download,
+  Files,
   LayoutDashboard,
   LineChart,
   LogOut,
@@ -14,18 +15,26 @@ import { Dashboard } from "./components/Dashboard";
 import { Export } from "./components/Export";
 import { Graphics } from "./components/Graphics";
 import { Import } from "./components/Import";
+import { SourceData } from "./components/SourceData";
 import { TableViewer } from "./components/TableViewer";
 import { cn } from "./lib/utils";
 import { useImportController } from "./lib/useImportController";
 import type { AttentionResult, Report, User } from "./types/bloodwork";
 
-type View = "dashboard" | "table" | "graphics" | "import" | "export";
+type View =
+  | "dashboard"
+  | "table"
+  | "graphics"
+  | "import"
+  | "source-data"
+  | "export";
 
 const TABS: { id: View; label: string; Icon: typeof LayoutDashboard }[] = [
   { id: "dashboard", label: "Dashboard", Icon: LayoutDashboard },
   { id: "table", label: "Table Viewer", Icon: TableIcon },
   { id: "graphics", label: "Graphics", Icon: LineChart },
   { id: "import", label: "Import", Icon: Upload },
+  { id: "source-data", label: "Source data", Icon: Files },
   { id: "export", label: "Export", Icon: Download },
 ];
 
@@ -387,7 +396,6 @@ export default function App() {
         {view === "graphics" && <Graphics reports={reports} />}
         {view === "import" && (
           <Import
-            reports={reports}
             canUseServerFolder={canUseServerFolder}
             concurrency={importController.concurrency}
             onConcurrencyChange={importController.setConcurrency}
@@ -405,6 +413,7 @@ export default function App() {
             clearFinished={importController.clearFinished}
           />
         )}
+        {view === "source-data" && <SourceData reports={reports} />}
         {view === "export" && <Export reports={reports} />}
       </main>
     </div>

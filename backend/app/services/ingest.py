@@ -20,6 +20,8 @@ from app.parsers import LlmPdfParser, Parser
 from app.parsers.base import ParsedMeasurement
 from app.services.normalizer import slugify
 
+_REPORT_FILE_CACHE: dict[tuple[int, str], Path] = {}
+
 
 @dataclass(slots=True)
 class IngestResult:
@@ -30,6 +32,31 @@ class IngestResult:
 def _user_scoped_sha256(data: bytes, user_id: int) -> str:
     seed = f"{user_id}:".encode("utf-8")
     return hashlib.sha256(seed + data).hexdigest()
+
+
+def resolve_uploaded_pdf_path(user_id: int, content_hash: str) -> Path | None:
+    """Resolve a persisted PDF path for an existing report hash."""
+    cache_key = (user_id, content_hash)
+    cached = _REPORT_FILE_CACHE.get(cache_key)
+    if cached and cached.is_file():
+        return cached
+
+    upload_dir = Path(settings.upload_dir)
+    if not upload_dir.exists():
+        return None
+
+    for candidate in upload_dir.glob("*.pdf"):
+        if not candidate.is_file():
+            continue
+        try:
+            data = candidate.read_bytes()
+        except OSError:
+            continue
+        if _user_scoped_sha256(data, user_id) == content_hash:
+            _REPORT_FILE_CACHE[cache_key] = candidate
+            return candidate
+
+    return None
 
 
 def build_parser() -> Parser:

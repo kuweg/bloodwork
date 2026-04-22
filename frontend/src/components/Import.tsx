@@ -24,12 +24,9 @@ import {
   type Job,
   type JobStatus,
 } from "../lib/useImportController";
-import { formatIsoLikeDateTime } from "../lib/date";
 import { cn } from "../lib/utils";
-import type { Report } from "../types/bloodwork";
 
 interface Props {
-  reports: Report[];
   canUseServerFolder: boolean;
   concurrency: Concurrency;
   onConcurrencyChange: (next: Concurrency) => void;
@@ -48,7 +45,6 @@ interface Props {
 }
 
 export function Import({
-  reports,
   canUseServerFolder,
   concurrency,
   onConcurrencyChange,
@@ -93,18 +89,6 @@ export function Import({
         .length,
     [jobs],
   );
-  const uploadedFiles = useMemo(
-    () =>
-      [...reports].sort((a, b) => {
-        const left = Date.parse(a.uploaded_at);
-        const right = Date.parse(b.uploaded_at);
-        if (Number.isNaN(left) || Number.isNaN(right)) {
-          return b.uploaded_at.localeCompare(a.uploaded_at);
-        }
-        return right - left;
-      }),
-    [reports],
-  );
 
   return (
     <div className="space-y-6 p-4 sm:p-6">
@@ -148,37 +132,6 @@ export function Import({
           </p>
         </section>
       </div>
-
-      <section className="rounded-lg border border-gray-200 bg-white p-4 sm:p-5">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-lg">Files</h2>
-          <p className="text-sm text-gray-600">
-            {uploadedFiles.length} uploaded file{uploadedFiles.length === 1 ? "" : "s"}
-          </p>
-        </div>
-        {uploadedFiles.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm text-gray-500">
-            Uploaded files will appear here.
-          </div>
-        ) : (
-          <ul className="max-h-72 divide-y divide-gray-100 overflow-y-auto rounded border border-gray-100">
-            {uploadedFiles.map((report) => (
-              <li
-                key={report.id}
-                className="flex flex-col gap-1 px-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between"
-              >
-                <span className="flex min-w-0 items-center gap-2 text-gray-800">
-                  <FileText className="h-4 w-4 shrink-0 text-gray-400" />
-                  <span className="truncate">{report.source_filename}</span>
-                </span>
-                <span className="text-xs text-gray-500">
-                  {formatIsoLikeDateTime(report.uploaded_at)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
 
       <section className="rounded-lg border border-gray-200 bg-white p-4 sm:p-5">
         <h2 className="mb-3 text-lg">Upload from your computer</h2>
