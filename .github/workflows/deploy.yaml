@@ -88,10 +88,15 @@ jobs:
               local attempts="$1"; shift
               local delay="$1"; shift
               local try=1
-              until "$@"; do
+              local rc=0
+              while true; do
+                "$@" && rc=0 || rc=$?
+                if [ "$rc" -eq 0 ]; then
+                  return 0
+                fi
                 if [ "$try" -ge "$attempts" ]; then
                   echo "::error::Command failed after ${attempts} attempts: $*"
-                  return 1
+                  return "$rc"
                 fi
                 echo "Attempt $try/$attempts failed: $*. Retrying in ${delay}s..."
                 sleep "$delay"
