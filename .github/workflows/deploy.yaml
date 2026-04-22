@@ -84,12 +84,34 @@ jobs:
             VITE_DEFAULT_CONCURRENCY="${VITE_DEFAULT_CONCURRENCY:-10}"
             VITE_FOLDER_IMPORT_MAX_CONCURRENCY="${VITE_FOLDER_IMPORT_MAX_CONCURRENCY:-3}"
 
-            [ -d "$APP_DIR/.git" ] || { mkdir -p "$APP_DIR"; git clone "$REPO_URL" "$APP_DIR"; }
+            retry_cmd() {
+              local attempts="$1"; shift
+              local delay="$1"; shift
+              local try=1
+              until "$@"; do
+                if [ "$try" -ge "$attempts" ]; then
+                  echo "::error::Command failed after ${attempts} attempts: $*"
+                  return 1
+                fi
+                echo "Attempt $try/$attempts failed: $*. Retrying in ${delay}s..."
+                sleep "$delay"
+                try=$((try + 1))
+              done
+            }
+
+            # Guard against transient DNS/network hiccups on VPS.
+            retry_cmd 5 3 getent hosts github.com
+            retry_cmd 5 3 curl -fsS -I https://github.com
+
+            if [ ! -d "$APP_DIR/.git" ]; then
+              mkdir -p "$APP_DIR"
+              retry_cmd 5 3 git clone "$REPO_URL" "$APP_DIR"
+            fi
             [ -w "$APP_DIR/.git" ] || { echo "::error::Repo is not writable by $(id -un). Run once on VPS as root: chown -R $(id -un):$(id -gn) \"$APP_DIR\""; exit 1; }
 
             cd "$APP_DIR"
             git config --global --add safe.directory "$APP_DIR"
-            git fetch --all --prune
+            retry_cmd 5 3 git fetch --all --prune
             git checkout main
             git reset --hard origin/main
 
