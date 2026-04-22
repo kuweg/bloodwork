@@ -5,10 +5,7 @@ import {
   ChevronRight,
   Info,
   Loader2,
-  Minus,
   Search,
-  TrendingDown,
-  TrendingUp,
   X,
 } from "lucide-react";
 import { api } from "../api/client";
@@ -320,16 +317,13 @@ export function TableViewer({ reports }: Props) {
             <table className="w-full min-w-max">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="sticky left-0 z-10 border-b border-gray-200 bg-gray-50 px-3 py-3 text-left sm:px-6 sm:py-4">
+                  <th className="sticky left-0 z-10 w-[170px] min-w-[170px] max-w-[170px] border-b border-gray-200 bg-gray-50 px-3 py-3 text-left sm:w-[240px] sm:min-w-[240px] sm:max-w-[240px] sm:px-6 sm:py-4">
                     Test Name
-                  </th>
-                  <th className="border-b border-gray-200 px-3 py-3 text-center sm:px-6 sm:py-4">
-                    Trend
                   </th>
                   {visibleDates.map((date) => (
                     <th
                       key={date}
-                      className="min-w-[140px] border-b border-gray-200 px-3 py-3 text-center sm:px-6 sm:py-4"
+                      className="min-w-[112px] border-b border-gray-200 px-2 py-3 text-center sm:min-w-[140px] sm:px-6 sm:py-4"
                     >
                       {formatIsoLikeDate(date, {
                         month: "short",
@@ -343,9 +337,9 @@ export function TableViewer({ reports }: Props) {
               <tbody>
                 {searchable.map((test, idx) => (
                   <tr key={test.canonical} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                    <td className="sticky left-0 z-10 border-b border-gray-200 bg-inherit px-3 py-3 sm:px-6 sm:py-4">
-                      <div className="flex items-center gap-1.5 text-gray-900">
-                        <span>{test.testName}</span>
+                    <td className="sticky left-0 z-10 w-[170px] min-w-[170px] max-w-[170px] border-b border-gray-200 bg-inherit px-3 py-3 align-top sm:w-[240px] sm:min-w-[240px] sm:max-w-[240px] sm:px-6 sm:py-4">
+                      <div className="flex items-start gap-1.5 text-gray-900">
+                        <span className="break-words">{test.testName}</span>
                         <button
                           onClick={() =>
                             setInfoFor({ canonical: test.canonical, title: test.testName })
@@ -364,15 +358,12 @@ export function TableViewer({ reports }: Props) {
                         </div>
                       )}
                     </td>
-                    <td className="border-b border-gray-200 px-3 py-3 text-center sm:px-6 sm:py-4">
-                      <Trend test={test} dates={visibleDates} />
-                    </td>
                     {visibleDates.map((date) => {
                       const cell = test.dates[date];
                       return (
                         <td
                           key={date}
-                          className="border-b border-gray-200 px-3 py-3 text-center sm:px-6 sm:py-4"
+                          className="border-b border-gray-200 px-2 py-3 text-center sm:px-6 sm:py-4"
                         >
                           {cell ? (
                             <span
@@ -408,16 +399,6 @@ export function TableViewer({ reports }: Props) {
       )}
     </div>
   );
-}
-
-function Trend({ test, dates }: { test: TestHistory; dates: string[] }) {
-  const existing = dates.filter((d) => Boolean(test.dates[d]));
-  if (existing.length < 2) return <Minus className="mx-auto h-4 w-4 text-gray-500" />;
-  const latest = test.dates[existing[existing.length - 1]].value;
-  const prev = test.dates[existing[existing.length - 2]].value;
-  if (latest > prev) return <TrendingUp className="mx-auto h-4 w-4 text-blue-600" />;
-  if (latest < prev) return <TrendingDown className="mx-auto h-4 w-4 text-orange-600" />;
-  return <Minus className="mx-auto h-4 w-4 text-gray-500" />;
 }
 
 function TestInfoModal({

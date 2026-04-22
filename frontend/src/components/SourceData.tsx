@@ -14,12 +14,27 @@ export function SourceData({ reports }: Props) {
   const sortedReports = useMemo(
     () =>
       [...reports].sort((a, b) => {
-        const left = Date.parse(a.uploaded_at);
-        const right = Date.parse(b.uploaded_at);
-        if (Number.isNaN(left) || Number.isNaN(right)) {
-          return b.uploaded_at.localeCompare(a.uploaded_at);
+        const performedLeft = a.collected_at ? Date.parse(a.collected_at) : Number.NaN;
+        const performedRight = b.collected_at ? Date.parse(b.collected_at) : Number.NaN;
+        const hasPerformedLeft = Number.isFinite(performedLeft);
+        const hasPerformedRight = Number.isFinite(performedRight);
+        if (hasPerformedLeft && hasPerformedRight && performedLeft !== performedRight) {
+          return performedRight - performedLeft;
         }
-        return right - left;
+        if (hasPerformedLeft !== hasPerformedRight) {
+          return hasPerformedLeft ? -1 : 1;
+        }
+
+        const uploadedLeft = Date.parse(a.uploaded_at);
+        const uploadedRight = Date.parse(b.uploaded_at);
+        if (Number.isFinite(uploadedLeft) && Number.isFinite(uploadedRight)) {
+          if (uploadedLeft !== uploadedRight) return uploadedRight - uploadedLeft;
+        } else {
+          const fallback = b.uploaded_at.localeCompare(a.uploaded_at);
+          if (fallback !== 0) return fallback;
+        }
+
+        return a.source_filename.localeCompare(b.source_filename);
       }),
     [reports],
   );
