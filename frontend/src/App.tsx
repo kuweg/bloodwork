@@ -21,7 +21,7 @@ import { SourceData } from "./components/SourceData";
 import { TableViewer } from "./components/TableViewer";
 import { cn } from "./lib/utils";
 import { useImportController } from "./lib/useImportController";
-import type { AttentionResult, Report, User } from "./types/bloodwork";
+import type { Annotation, AttentionResult, Report, User } from "./types/bloodwork";
 
 type View =
   | "dashboard"
@@ -78,6 +78,7 @@ export default function App() {
   const [attention, setAttention] = useState<AttentionResult | null>(null);
   const [attentionLoading, setAttentionLoading] = useState(false);
   const [attentionError, setAttentionError] = useState<string | null>(null);
+  const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [theme, setTheme] = useState<ThemeMode>(resolveInitialTheme);
   const canUseServerFolder = user?.role === "admin";
 
@@ -95,6 +96,15 @@ export default function App() {
       setError(msg);
     }
   }, []);
+
+  const refreshAnnotations = useCallback(async () => {
+    if (!user) return;
+    try {
+      setAnnotations(await api.listAnnotations());
+    } catch {
+      // Non-critical; leave existing annotations in place.
+    }
+  }, [user]);
 
   const refreshAttention = useCallback(async () => {
     if (!user) throw new Error("Not authenticated");
@@ -146,6 +156,14 @@ export default function App() {
     if (!user) return;
     void refresh();
   }, [refresh, user]);
+
+  useEffect(() => {
+    if (!user) {
+      setAnnotations([]);
+      return;
+    }
+    void refreshAnnotations();
+  }, [user, refreshAnnotations]);
 
   useEffect(() => {
     if (!user) {
@@ -401,13 +419,15 @@ export default function App() {
             attentionLoading={attentionLoading}
             attentionError={attentionError}
             refreshAttention={refreshAttention}
+            annotations={annotations}
+            refreshAnnotations={refreshAnnotations}
           />
         </div>
         <div className={cn(view !== "table" && "hidden")}>
-          <TableViewer reports={reports} />
+          <TableViewer reports={reports} annotations={annotations} />
         </div>
         <div className={cn(view !== "graphics" && "hidden")}>
-          <Graphics reports={reports} />
+          <Graphics reports={reports} annotations={annotations} />
         </div>
         <div className={cn(view !== "compare" && "hidden")}>
           <Compare reports={reports} />

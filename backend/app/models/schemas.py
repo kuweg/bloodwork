@@ -17,6 +17,19 @@ class MeasurementRead(BaseModel):
     taken_at: date | None
 
 
+class AnnotationCreate(BaseModel):
+    date: date
+    label: str = Field(min_length=1, max_length=200)
+
+
+class AnnotationRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    date: date
+    label: str
+
+
 class MeasurementUpdate(BaseModel):
     """Partial update for a single measurement; only set fields are applied."""
 

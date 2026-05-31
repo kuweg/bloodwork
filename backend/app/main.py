@@ -6,7 +6,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api import analysis, auth, results, upload
+from app.api import analysis, annotations, auth, results, upload
 from app.config import settings
 from app.db import init_db
 
@@ -33,6 +33,7 @@ app.add_middleware(
 app.include_router(upload.router)
 app.include_router(results.router)
 app.include_router(analysis.router)
+app.include_router(annotations.router)
 app.include_router(auth.router)
 
 

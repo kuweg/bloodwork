@@ -88,6 +88,12 @@ export interface TestInfoResponse {
   mentioned_as: string[];
 }
 
+export interface Annotation {
+  id: number;
+  date: string; // ISO date
+  label: string;
+}
+
 export interface User {
   id: number;
   email: string;

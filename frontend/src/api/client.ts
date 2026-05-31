@@ -1,5 +1,6 @@
 import type {
   AggregatedSeries,
+  Annotation,
   AuthResponse,
   AskResponse,
   AttentionResult,
@@ -147,6 +148,22 @@ export const api = {
 
   deleteReport(id: number): Promise<void> {
     return request<void>(`/results/reports/${id}`, { method: "DELETE" });
+  },
+
+  listAnnotations(): Promise<Annotation[]> {
+    return request<Annotation[]>("/annotations");
+  },
+
+  createAnnotation(date: string, label: string): Promise<Annotation> {
+    return request<Annotation>("/annotations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date, label }),
+    });
+  },
+
+  deleteAnnotation(id: number): Promise<void> {
+    return request<void>(`/annotations/${id}`, { method: "DELETE" });
   },
 
   reportPdfUrl(reportId: number): string {

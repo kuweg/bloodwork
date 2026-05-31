@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Info, Search } from "lucide-react";
-import type { Report } from "../types/bloodwork";
+import type { Annotation, Report } from "../types/bloodwork";
 import { formatIsoLikeDate } from "../lib/date";
 import { historyByTest, type TestHistory } from "../lib/data";
 import { groupByPanel } from "../lib/panels";
@@ -10,6 +10,7 @@ import { TestDetailModal } from "./TestDetailModal";
 
 interface Props {
   reports: Report[];
+  annotations: Annotation[];
 }
 
 const STATUS_COLORS: Record<Status, string> = {
@@ -61,7 +62,7 @@ function smartNameScore(test: TestHistory, query: string): number {
   return 0;
 }
 
-export function TableViewer({ reports }: Props) {
+export function TableViewer({ reports, annotations }: Props) {
   const [sortBy, setSortBy] = useState<"name" | "latest">("name");
   const [search, setSearch] = useState("");
   const [fromDate, setFromDate] = useState("");
@@ -408,6 +409,7 @@ export function TableViewer({ reports }: Props) {
           canonical={infoFor.canonical}
           title={infoFor.title}
           reports={reports}
+          annotations={annotations}
           onClose={() => setInfoFor(null)}
         />
       )}

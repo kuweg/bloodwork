@@ -80,6 +80,21 @@ class AuthSession(Base):
     user: Mapped[User] = relationship(back_populates="sessions")
 
 
+class Annotation(Base):
+    """A dated note/event a user attaches for context on their timeline."""
+
+    __tablename__ = "annotations"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        index=True,
+    )
+    date: Mapped[date] = mapped_column(Date, index=True)
+    label: Mapped[str] = mapped_column(String(200))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
 class TestInfo(Base):
     """Cached LLM-generated description & clinical importance per canonical test."""
 

@@ -14,13 +14,15 @@ import {
   YAxis,
 } from "recharts";
 import { Plus, Trash2, X } from "lucide-react";
-import type { Report } from "../types/bloodwork";
+import type { Annotation, Report } from "../types/bloodwork";
 import { formatIsoLikeDate } from "../lib/date";
 import { historyByTest } from "../lib/data";
+import { ANNOTATION_COLOR, annotationsInRange } from "../lib/annotations";
 import { cn } from "../lib/utils";
 
 interface Props {
   reports: Report[];
+  annotations: Annotation[];
 }
 
 interface ChartConfig {
@@ -77,7 +79,7 @@ function statusDot(name: string, color: string) {
   };
 }
 
-export function Graphics({ reports }: Props) {
+export function Graphics({ reports, annotations }: Props) {
   const history = useMemo(() => historyByTest(reports), [reports]);
   const allDates = useMemo(
     () => [...new Set(history.flatMap((t) => Object.keys(t.dates)))].sort(),
@@ -109,8 +111,10 @@ export function Graphics({ reports }: Props) {
 
   const removeChart = (id: string) => setCharts(charts.filter((c) => c.id !== id));
 
-  const chartData = (cfg: ChartConfig) => {
-    const dates = cfg.dateRange.length ? cfg.dateRange : allDates;
+  const chartData = (cfg: ChartConfig, events: Annotation[] = []) => {
+    const baseDates = cfg.dateRange.length ? cfg.dateRange : allDates;
+    // Inject event dates as categories so their markers align on the axis.
+    const dates = [...new Set([...baseDates, ...events.map((e) => e.date)])].sort();
     return dates.map((date) => {
       const point: Record<string, string | number> = {
         date: formatIsoLikeDate(date, {
@@ -270,7 +274,16 @@ export function Graphics({ reports }: Props) {
       ) : (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {charts.map((chart) => {
-            const data = chartData(chart);
+            const baseDates = chart.dateRange.length ? chart.dateRange : allDates;
+            const events =
+              chart.type === "line"
+                ? annotationsInRange(
+                    annotations,
+                    baseDates[0],
+                    baseDates[baseDates.length - 1],
+                  )
+                : [];
+            const data = chartData(chart, events);
             const testNames = chart.tests.map(
               (c) => history.find((t) => t.canonical === c)?.testName ?? c,
             );
@@ -353,6 +366,24 @@ export function Graphics({ reports }: Props) {
                           }}
                         />
                       )}
+                      {events.map((e) => (
+                        <ReferenceLine
+                          key={`ev-${e.id}`}
+                          x={formatIsoLikeDate(e.date, {
+                            month: "short",
+                            day: "numeric",
+                            year: "2-digit",
+                          })}
+                          stroke={ANNOTATION_COLOR}
+                          strokeDasharray="2 4"
+                          label={{
+                            value: e.label.length > 12 ? `${e.label.slice(0, 12)}…` : e.label,
+                            position: "insideTopRight",
+                            fill: ANNOTATION_COLOR,
+                            fontSize: 10,
+                          }}
+                        />
+                      ))}
                       {testNames.map((name, idx) => (
                         <Line
                           key={`${chart.id}-l-${name}`}

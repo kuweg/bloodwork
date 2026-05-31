@@ -12,11 +12,15 @@ import {
 } from "recharts";
 import { BookOpen, Loader2, X } from "lucide-react";
 import { api } from "../api/client";
-import type { Report, TestInfoResponse } from "../types/bloodwork";
+import type { Annotation, Report, TestInfoResponse } from "../types/bloodwork";
 import { formatIsoLikeDate } from "../lib/date";
 import { historyByTest } from "../lib/data";
+import { ANNOTATION_COLOR, annotationsInRange } from "../lib/annotations";
 import type { Status } from "../lib/metrics";
 import { cn } from "../lib/utils";
+
+const fmtShort = (iso: string) =>
+  formatIsoLikeDate(iso, { month: "short", day: "numeric", year: "2-digit" });
 
 const STATUS_BADGE: Record<Status, string> = {
   good: "bg-green-100 text-green-800",
@@ -29,11 +33,13 @@ export function TestDetailModal({
   canonical,
   title,
   reports,
+  annotations,
   onClose,
 }: {
   canonical: string;
   title: string;
   reports: Report[];
+  annotations: Annotation[];
   onClose: () => void;
 }) {
   const [info, setInfo] = useState<TestInfoResponse | null>(null);
@@ -53,14 +59,24 @@ export function TestDetailModal({
       .map((date) => ({ date, ...test.dates[date] }));
   }, [test]);
 
-  const chartData = useMemo(
+  const events = useMemo(
     () =>
-      readings.map((r) => ({
-        date: formatIsoLikeDate(r.date, { month: "short", day: "numeric", year: "2-digit" }),
-        value: r.value,
-      })),
-    [readings],
+      annotationsInRange(
+        annotations,
+        readings.length ? readings[0].date : undefined,
+        readings.length ? readings[readings.length - 1].date : undefined,
+      ),
+    [annotations, readings],
   );
+
+  // Inject event dates as categories so their markers always align on the axis.
+  const chartData = useMemo(() => {
+    const valueByDate = new Map(readings.map((r) => [r.date, r.value]));
+    const allIso = [
+      ...new Set([...readings.map((r) => r.date), ...events.map((e) => e.date)]),
+    ].sort();
+    return allIso.map((iso) => ({ date: fmtShort(iso), value: valueByDate.get(iso) ?? null }));
+  }, [readings, events]);
 
   useEffect(() => {
     let cancelled = false;
@@ -116,7 +132,7 @@ export function TestDetailModal({
           </button>
         </div>
 
-        {chartData.length >= 2 && (
+        {readings.length >= 2 && (
           <div className="mb-4">
             <h3 className="mb-1 text-sm font-semibold uppercase tracking-wide text-gray-500">
               Trend
@@ -142,7 +158,28 @@ export function TestDetailModal({
                 {test?.refLow != null && (
                   <ReferenceLine y={test.refLow} stroke={BAND_COLOR} strokeDasharray="4 4" ifOverflow="extendDomain" />
                 )}
-                <Line type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} />
+                {events.map((e) => (
+                  <ReferenceLine
+                    key={e.id}
+                    x={fmtShort(e.date)}
+                    stroke={ANNOTATION_COLOR}
+                    strokeDasharray="2 4"
+                    label={{
+                      value: e.label.length > 14 ? `${e.label.slice(0, 14)}…` : e.label,
+                      position: "insideTopRight",
+                      fontSize: 10,
+                      fill: ANNOTATION_COLOR,
+                    }}
+                  />
+                ))}
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#3b82f6"
+                  strokeWidth={2}
+                  dot={{ r: 3 }}
+                  connectNulls
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>

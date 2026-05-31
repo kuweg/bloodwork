@@ -3,19 +3,23 @@ import {
   Activity,
   AlertCircle,
   ArrowRight,
+  CalendarDays,
   CheckCircle,
   Gauge,
   Info,
   Loader2,
+  Plus,
   RefreshCw,
   Send,
   Sparkles,
+  Trash2,
   TrendingDown,
   TrendingUp,
   X,
 } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, YAxis } from "recharts";
 import type {
+  Annotation,
   AttentionItem,
   AttentionResult,
   AttentionSeverity,
@@ -39,6 +43,8 @@ interface Props {
   attentionLoading: boolean;
   attentionError: string | null;
   refreshAttention: () => Promise<AttentionResult>;
+  annotations: Annotation[];
+  refreshAnnotations: () => Promise<void>;
 }
 
 export function Dashboard({
@@ -47,6 +53,8 @@ export function Dashboard({
   attentionLoading,
   attentionError,
   refreshAttention,
+  annotations,
+  refreshAnnotations,
 }: Props) {
   const [selected, setSelected] = useState<"all" | Status>("all");
   const [providers, setProviders] = useState<ProviderInfo | null>(null);
@@ -175,6 +183,8 @@ export function Dashboard({
         />
       )}
 
+      <EventsPanel annotations={annotations} refresh={refreshAnnotations} />
+
       <div className="space-y-6">
         {groupByPanel(filtered, (t) => ({ canonical: t.canonical, name: t.name })).map(
           (group) => (
@@ -235,6 +245,7 @@ export function Dashboard({
           canonical={infoFor.canonical}
           title={infoFor.title}
           reports={reports}
+          annotations={annotations}
           onClose={() => setInfoFor(null)}
         />
       )}
@@ -663,6 +674,110 @@ function HealthSnapshot({ points }: { points: HealthPoint[] }) {
             </AreaChart>
           </ResponsiveContainer>
         </div>
+      )}
+    </div>
+  );
+}
+
+// ----- Events / annotations -----
+function EventsPanel({
+  annotations,
+  refresh,
+}: {
+  annotations: Annotation[];
+  refresh: () => Promise<void>;
+}) {
+  const [date, setDate] = useState("");
+  const [label, setLabel] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const sorted = [...annotations].sort((a, b) => b.date.localeCompare(a.date));
+
+  async function add() {
+    if (!date || !label.trim() || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await api.createAnnotation(date, label.trim());
+      setLabel("");
+      setDate("");
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function remove(id: number) {
+    setError(null);
+    try {
+      await api.deleteAnnotation(id);
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-3 sm:p-4">
+      <div className="mb-1 flex items-center gap-2">
+        <CalendarDays className="h-5 w-5 text-blue-600" />
+        <h2 className="text-base font-medium sm:text-lg">Events</h2>
+        <span className="text-xs text-gray-400">{annotations.length}</span>
+      </div>
+      <p className="mb-2 text-xs text-gray-500">
+        Note life events (e.g. “started statin”, “fasting”) — they show as markers on trend charts.
+      </p>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <input
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          className="rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <input
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") void add();
+          }}
+          placeholder="What happened?"
+          maxLength={200}
+          className="flex-1 rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <button
+          onClick={() => void add()}
+          disabled={!date || !label.trim() || busy}
+          className="flex items-center justify-center gap-1 rounded bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+        >
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+          Add
+        </button>
+      </div>
+      {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+      {sorted.length > 0 && (
+        <ul className="mt-3 divide-y divide-gray-100">
+          {sorted.map((a) => (
+            <li key={a.id} className="flex items-center justify-between gap-3 py-1.5 text-sm">
+              <span className="flex min-w-0 items-center gap-2">
+                <span className="shrink-0 tabular-nums text-xs text-gray-500">
+                  {formatIsoLikeDate(a.date, { year: "numeric", month: "short", day: "numeric" })}
+                </span>
+                <span className="truncate text-gray-800">{a.label}</span>
+              </span>
+              <button
+                onClick={() => void remove(a.id)}
+                className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600"
+                title="Delete event"
+                aria-label="Delete event"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );
