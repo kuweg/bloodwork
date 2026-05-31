@@ -344,12 +344,14 @@ export function TableViewer({ reports }: Props) {
                     <tr>
                       <td
                         colSpan={visibleDates.length + 1}
-                        className="border-b border-gray-200 bg-gray-100 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-600 sm:px-6"
+                        className="border-b border-gray-200 bg-gray-100 p-0"
                       >
-                        {group.panel}
-                        <span className="ml-2 font-normal text-gray-400">
-                          {group.items.length}
-                        </span>
+                        <div className="sticky left-0 z-10 inline-block px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-600 sm:px-6">
+                          {group.panel}
+                          <span className="ml-2 font-normal text-gray-400">
+                            {group.items.length}
+                          </span>
+                        </div>
                       </td>
                     </tr>
                     {group.items.map((test, idx) => (
