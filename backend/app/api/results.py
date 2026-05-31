@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -109,7 +109,7 @@ async def delete_report(
     report_id: int,
     session: AsyncSession = Depends(get_session),
     user: User = Depends(get_current_user),
-) -> None:
+) -> Response:
     """Delete one of your reports and its measurements (and its stored PDF)."""
     stmt = (
         select(Report)
@@ -130,7 +130,7 @@ async def delete_report(
 
     await session.delete(report)
     await session.commit()
-    return None
+    return Response(status_code=204)
 
 
 @router.get("/aggregate", response_model=list[AggregatedSeries])
