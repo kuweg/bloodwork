@@ -3,8 +3,8 @@ import {
   Activity,
   AlertCircle,
   ArrowRight,
-  BookOpen,
   CheckCircle,
+  Gauge,
   Info,
   Loader2,
   RefreshCw,
@@ -14,22 +14,24 @@ import {
   TrendingUp,
   X,
 } from "lucide-react";
+import { Area, AreaChart, ResponsiveContainer, Tooltip, YAxis } from "recharts";
 import type {
   AttentionItem,
   AttentionResult,
   AttentionSeverity,
   ProviderInfo,
   Report,
-  TestInfoResponse,
 } from "../types/bloodwork";
 import { api } from "../api/client";
 import { formatIsoLikeDate } from "../lib/date";
 import { latestDate, latestTests } from "../lib/data";
 import { groupByPanel } from "../lib/panels";
 import { computeInsights, type Insight } from "../lib/insights";
+import { healthSnapshots, type HealthPoint } from "../lib/health";
 import type { Status } from "../lib/metrics";
 import { cn } from "../lib/utils";
 import { Markdown } from "./Markdown";
+import { TestDetailModal } from "./TestDetailModal";
 
 interface Props {
   reports: Report[];
@@ -60,6 +62,7 @@ export function Dashboard({
   const tests = useMemo(() => latestTests(reports), [reports]);
   const lastDate = useMemo(() => latestDate(reports), [reports]);
   const insights = useMemo(() => computeInsights(reports, { limit: 8 }), [reports]);
+  const health = useMemo(() => healthSnapshots(reports), [reports]);
 
   const heuristicCounts = useMemo(
     () => ({
@@ -159,6 +162,8 @@ export function Dashboard({
         />
       </div>
 
+      {health.length > 0 && <HealthSnapshot points={health} />}
+
       <ChatBar providers={providers} />
 
       <SummaryPanel providers={providers} hasReports={tests.length > 0} />
@@ -226,9 +231,10 @@ export function Dashboard({
       </div>
 
       {infoFor && (
-        <TestInfoModal
-          canonicalName={infoFor.canonical}
-          fallbackTitle={infoFor.title}
+        <TestDetailModal
+          canonical={infoFor.canonical}
+          title={infoFor.title}
+          reports={reports}
           onClose={() => setInfoFor(null)}
         />
       )}
@@ -601,6 +607,67 @@ function InsightRow({
   );
 }
 
+// ----- Health snapshot -----
+function HealthSnapshot({ points }: { points: HealthPoint[] }) {
+  const latest = points[points.length - 1];
+  const prev = points.length >= 2 ? points[points.length - 2] : null;
+  const delta = prev ? latest.pct - prev.pct : null;
+  const data = points.map((p) => ({
+    date: formatIsoLikeDate(p.date, { month: "short", day: "numeric", year: "2-digit" }),
+    pct: p.pct,
+  }));
+  const tone =
+    latest.pct >= 80
+      ? "text-emerald-700"
+      : latest.pct >= 60
+        ? "text-yellow-700"
+        : "text-red-700";
+
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-3 sm:p-4">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Gauge className="h-5 w-5 text-blue-600" />
+          <div>
+            <h2 className="text-base font-medium sm:text-lg">Health snapshot</h2>
+            <p className="text-xs text-gray-500">
+              {latest.inRange}/{latest.total} ranged tests in range
+            </p>
+          </div>
+        </div>
+        <div className="text-right">
+          <p className={cn("text-3xl font-semibold tabular-nums sm:text-4xl", tone)}>
+            {latest.pct}%
+          </p>
+          {delta != null && (
+            <p className="text-xs text-gray-500">
+              {delta > 0 ? "+" : ""}
+              {delta}% vs last
+            </p>
+          )}
+        </div>
+      </div>
+      {data.length >= 2 && (
+        <div className="mt-2 h-16">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
+              <YAxis hide domain={[0, 100]} />
+              <Tooltip formatter={(value) => [`${value}%`, "In range"]} />
+              <Area
+                type="monotone"
+                dataKey="pct"
+                stroke="#3b82f6"
+                fill="#bfdbfe"
+                strokeWidth={2}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ----- Attention modal -----
 function AttentionModal({
   data,
@@ -723,123 +790,6 @@ function AttentionRow({ item }: { item: AttentionItem }) {
         </div>
       </div>
     </li>
-  );
-}
-
-// ----- Test info modal -----
-function TestInfoModal({
-  canonicalName,
-  fallbackTitle,
-  onClose,
-}: {
-  canonicalName: string;
-  fallbackTitle: string;
-  onClose: () => void;
-}) {
-  const [data, setData] = useState<TestInfoResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-    api
-      .getTestInfo(canonicalName)
-      .then((res) => {
-        if (!cancelled) setData(res);
-      })
-      .catch((err) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : String(err));
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [canonicalName]);
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      onClick={onClose}
-    >
-      <div
-        className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-lg bg-white p-4 sm:p-6"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
-          <h2 className="flex items-center gap-2 text-xl sm:text-2xl">
-            <BookOpen className="h-5 w-5 text-blue-600" />
-            {data?.title || fallbackTitle}
-          </h2>
-          <button
-            onClick={onClose}
-            className="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-            aria-label="Close"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        {loading && (
-          <div className="flex items-center justify-center py-10 text-gray-500">
-            <Loader2 className="h-6 w-6 animate-spin" />
-          </div>
-        )}
-
-        {error && !loading && (
-          <p className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-            {error}
-          </p>
-        )}
-
-        {data && !loading && (
-          <div className="space-y-4">
-            {data.mentioned_as.length > 0 && (
-              <section>
-                <h3 className="mb-1 text-sm font-semibold uppercase tracking-wide text-gray-500">
-                  Mentioned in your data as
-                </h3>
-                <ul className="flex flex-wrap gap-2">
-                  {data.mentioned_as.map((alias) => (
-                    <li
-                      key={alias}
-                      className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-sm text-gray-700"
-                    >
-                      {alias}
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
-
-            {data.description && (
-              <section>
-                <h3 className="mb-1 text-sm font-semibold uppercase tracking-wide text-gray-500">
-                  Description
-                </h3>
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-800">
-                  {data.description}
-                </p>
-              </section>
-            )}
-
-            {data.importance && (
-              <section>
-                <h3 className="mb-1 text-sm font-semibold uppercase tracking-wide text-gray-500">
-                  Why it is important
-                </h3>
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-800">
-                  {data.importance}
-                </p>
-              </section>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
   );
 }
 

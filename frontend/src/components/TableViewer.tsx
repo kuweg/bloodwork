@@ -1,20 +1,12 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import {
-  BookOpen,
-  ChevronLeft,
-  ChevronRight,
-  Info,
-  Loader2,
-  Search,
-  X,
-} from "lucide-react";
-import { api } from "../api/client";
-import type { Report, TestInfoResponse } from "../types/bloodwork";
+import { ChevronLeft, ChevronRight, Info, Search } from "lucide-react";
+import type { Report } from "../types/bloodwork";
 import { formatIsoLikeDate } from "../lib/date";
 import { historyByTest, type TestHistory } from "../lib/data";
 import { groupByPanel } from "../lib/panels";
 import type { Status } from "../lib/metrics";
 import { cn } from "../lib/utils";
+import { TestDetailModal } from "./TestDetailModal";
 
 interface Props {
   reports: Report[];
@@ -412,139 +404,13 @@ export function TableViewer({ reports }: Props) {
       )}
 
       {infoFor && (
-        <TestInfoModal
-          canonicalName={infoFor.canonical}
-          fallbackTitle={infoFor.title}
+        <TestDetailModal
+          canonical={infoFor.canonical}
+          title={infoFor.title}
+          reports={reports}
           onClose={() => setInfoFor(null)}
         />
       )}
-    </div>
-  );
-}
-
-function TestInfoModal({
-  canonicalName,
-  fallbackTitle,
-  onClose,
-}: {
-  canonicalName: string;
-  fallbackTitle: string;
-  onClose: () => void;
-}) {
-  const [data, setData] = useState<TestInfoResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-
-    api
-      .getTestInfo(canonicalName)
-      .then((res) => {
-        if (!cancelled) setData(res);
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : String(err));
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [canonicalName]);
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      onClick={onClose}
-    >
-      <div
-        className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-lg bg-white p-4 sm:p-6"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
-          <h2 className="flex items-center gap-2 text-xl sm:text-2xl">
-            <BookOpen className="h-5 w-5 text-blue-600" />
-            {data?.title || fallbackTitle}
-          </h2>
-          <button
-            onClick={onClose}
-            className="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-            aria-label="Close"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        {loading && (
-          <div className="flex items-center justify-center py-10 text-gray-500">
-            <Loader2 className="h-6 w-6 animate-spin" />
-          </div>
-        )}
-
-        {error && !loading && (
-          <p className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-            {error}
-          </p>
-        )}
-
-        {data && !loading && (
-          <div className="space-y-4">
-            <section>
-              <h3 className="mb-1 text-sm font-semibold uppercase tracking-wide text-gray-500">
-                Title
-              </h3>
-              <p className="text-sm text-gray-800">{data.title}</p>
-            </section>
-
-            {data.mentioned_as.length > 0 && (
-              <section>
-                <h3 className="mb-1 text-sm font-semibold uppercase tracking-wide text-gray-500">
-                  Mentioned in your data as
-                </h3>
-                <ul className="flex flex-wrap gap-2">
-                  {data.mentioned_as.map((alias) => (
-                    <li
-                      key={alias}
-                      className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-sm text-gray-700"
-                    >
-                      {alias}
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
-
-            {data.description && (
-              <section>
-                <h3 className="mb-1 text-sm font-semibold uppercase tracking-wide text-gray-500">
-                  Description
-                </h3>
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-800">
-                  {data.description}
-                </p>
-              </section>
-            )}
-
-            {data.importance && (
-              <section>
-                <h3 className="mb-1 text-sm font-semibold uppercase tracking-wide text-gray-500">
-                  Why it is important
-                </h3>
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-800">
-                  {data.importance}
-                </p>
-              </section>
-            )}
-          </div>
-        )}
-      </div>
     </div>
   );
 }
