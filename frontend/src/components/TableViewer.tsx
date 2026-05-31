@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import {
   BookOpen,
   ChevronLeft,
@@ -12,6 +12,7 @@ import { api } from "../api/client";
 import type { Report, TestInfoResponse } from "../types/bloodwork";
 import { formatIsoLikeDate } from "../lib/date";
 import { historyByTest, type TestHistory } from "../lib/data";
+import { groupByPanel } from "../lib/panels";
 import type { Status } from "../lib/metrics";
 import { cn } from "../lib/utils";
 
@@ -335,9 +336,25 @@ export function TableViewer({ reports }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {searchable.map((test, idx) => (
-                  <tr key={test.canonical} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                    <td className="sticky left-0 z-10 w-[170px] min-w-[170px] max-w-[170px] border-b border-gray-200 bg-inherit px-3 py-3 align-top sm:w-[240px] sm:min-w-[240px] sm:max-w-[240px] sm:px-6 sm:py-4">
+                {groupByPanel(searchable, (t) => ({
+                  canonical: t.canonical,
+                  name: t.testName,
+                })).map((group) => (
+                  <Fragment key={group.panel}>
+                    <tr>
+                      <td
+                        colSpan={visibleDates.length + 1}
+                        className="border-b border-gray-200 bg-gray-100 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-600 sm:px-6"
+                      >
+                        {group.panel}
+                        <span className="ml-2 font-normal text-gray-400">
+                          {group.items.length}
+                        </span>
+                      </td>
+                    </tr>
+                    {group.items.map((test, idx) => (
+                      <tr key={test.canonical} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                        <td className="sticky left-0 z-10 w-[170px] min-w-[170px] max-w-[170px] border-b border-gray-200 bg-inherit px-3 py-3 align-top sm:w-[240px] sm:min-w-[240px] sm:max-w-[240px] sm:px-6 sm:py-4">
                       <div className="flex items-start gap-1.5 text-gray-900">
                         <span className="break-words">{test.testName}</span>
                         <button
@@ -382,7 +399,9 @@ export function TableViewer({ reports }: Props) {
                         </td>
                       );
                     })}
-                  </tr>
+                      </tr>
+                    ))}
+                  </Fragment>
                 ))}
               </tbody>
             </table>

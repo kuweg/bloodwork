@@ -22,6 +22,7 @@ import type {
 import { api } from "../api/client";
 import { formatIsoLikeDate } from "../lib/date";
 import { latestDate, latestTests } from "../lib/data";
+import { groupByPanel } from "../lib/panels";
 import type { Status } from "../lib/metrics";
 import { cn } from "../lib/utils";
 
@@ -154,44 +155,59 @@ export function Dashboard({
 
       <ChatBar providers={providers} />
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {filtered.map((test) => (
-          <article
-            key={test.id}
-            className="rounded-lg border border-gray-200 bg-white p-4 transition-shadow hover:shadow-md sm:p-5"
-          >
-            <div className="mb-3 flex items-start justify-between">
-              <div className="flex-1">
-                <div className="mb-1 flex items-center gap-1.5">
-                  <h3 className="text-base sm:text-lg">{test.name}</h3>
-                  <button
-                    onClick={() =>
-                      setInfoFor({ canonical: test.canonical, title: test.name })
-                    }
-                    className="rounded-full p-0.5 text-gray-400 hover:bg-gray-100 hover:text-blue-600"
-                    aria-label="About this test"
-                    title="About this test"
-                  >
-                    <Info className="h-4 w-4" />
-                  </button>
-                </div>
-                <p className="text-sm text-gray-600">
-                  Normal: {test.normalRange} {test.unit}
-                </p>
+      <div className="space-y-6">
+        {groupByPanel(filtered, (t) => ({ canonical: t.canonical, name: t.name })).map(
+          (group) => (
+            <section key={group.panel}>
+              <div className="mb-3 flex items-center gap-3">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+                  {group.panel}
+                </h2>
+                <span className="text-xs text-gray-400">{group.items.length}</span>
+                <div className="h-px flex-1 bg-gray-200" />
               </div>
-              <StatusIcon status={test.status} />
-            </div>
-            <p className="mb-3 text-2xl text-gray-800 sm:text-3xl">
-              {test.value}{" "}
-              <span className="text-base text-gray-600">{test.unit}</span>
-            </p>
-            {test.description && (
-              <p className="text-sm leading-relaxed text-gray-700">
-                {test.description}
-              </p>
-            )}
-          </article>
-        ))}
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {group.items.map((test) => (
+                  <article
+                    key={test.id}
+                    className="rounded-lg border border-gray-200 bg-white p-4 transition-shadow hover:shadow-md sm:p-5"
+                  >
+                    <div className="mb-3 flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="mb-1 flex items-center gap-1.5">
+                          <h3 className="text-base sm:text-lg">{test.name}</h3>
+                          <button
+                            onClick={() =>
+                              setInfoFor({ canonical: test.canonical, title: test.name })
+                            }
+                            className="rounded-full p-0.5 text-gray-400 hover:bg-gray-100 hover:text-blue-600"
+                            aria-label="About this test"
+                            title="About this test"
+                          >
+                            <Info className="h-4 w-4" />
+                          </button>
+                        </div>
+                        <p className="text-sm text-gray-600">
+                          Normal: {test.normalRange} {test.unit}
+                        </p>
+                      </div>
+                      <StatusIcon status={test.status} />
+                    </div>
+                    <p className="mb-3 text-2xl text-gray-800 sm:text-3xl">
+                      {test.value}{" "}
+                      <span className="text-base text-gray-600">{test.unit}</span>
+                    </p>
+                    {test.description && (
+                      <p className="text-sm leading-relaxed text-gray-700">
+                        {test.description}
+                      </p>
+                    )}
+                  </article>
+                ))}
+              </div>
+            </section>
+          ),
+        )}
       </div>
 
       {infoFor && (
