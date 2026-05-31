@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity,
   AlertCircle,
+  ArrowRight,
   BookOpen,
   CheckCircle,
   Info,
@@ -9,6 +10,8 @@ import {
   RefreshCw,
   Send,
   Sparkles,
+  TrendingDown,
+  TrendingUp,
   X,
 } from "lucide-react";
 import type {
@@ -23,6 +26,7 @@ import { api } from "../api/client";
 import { formatIsoLikeDate } from "../lib/date";
 import { latestDate, latestTests } from "../lib/data";
 import { groupByPanel } from "../lib/panels";
+import { computeInsights, type Insight } from "../lib/insights";
 import type { Status } from "../lib/metrics";
 import { cn } from "../lib/utils";
 
@@ -54,6 +58,7 @@ export function Dashboard({
 
   const tests = useMemo(() => latestTests(reports), [reports]);
   const lastDate = useMemo(() => latestDate(reports), [reports]);
+  const insights = useMemo(() => computeInsights(reports, { limit: 8 }), [reports]);
 
   const heuristicCounts = useMemo(
     () => ({
@@ -154,6 +159,15 @@ export function Dashboard({
       </div>
 
       <ChatBar providers={providers} />
+
+      <SummaryPanel providers={providers} hasReports={tests.length > 0} />
+
+      {insights.length > 0 && (
+        <InsightsPanel
+          insights={insights}
+          onSelect={(canonical, title) => setInfoFor({ canonical, title })}
+        />
+      )}
 
       <div className="space-y-6">
         {groupByPanel(filtered, (t) => ({ canonical: t.canonical, name: t.name })).map(
@@ -428,6 +442,151 @@ function ChatBar({ providers }: { providers: ProviderInfo | null }) {
         </div>
       )}
     </div>
+  );
+}
+
+// ----- Explain my latest results -----
+function SummaryPanel({
+  providers,
+  hasReports,
+}: {
+  providers: ProviderInfo | null;
+  hasReports: boolean;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [answer, setAnswer] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [reportsConsidered, setReportsConsidered] = useState(0);
+  const notConfigured = providers && !providers.configured;
+
+  async function run() {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await api.summarize();
+      setAnswer(res.answer);
+      setReportsConsidered(res.reports_considered);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-3 sm:p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-5 w-5 text-blue-600" />
+          <div>
+            <h2 className="text-base font-medium sm:text-lg">Explain my latest results</h2>
+            <p className="text-xs text-gray-500">
+              Plain-language AI summary of your most recent report.
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={run}
+          disabled={busy || !!notConfigured || !hasReports}
+          className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+        >
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+          {answer ? "Regenerate" : "Explain"}
+        </button>
+      </div>
+
+      {notConfigured && (
+        <p className="mt-3 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          No LLM provider configured. Set <code>BW_LLM_PROVIDER</code> and{" "}
+          <code>BW_LLM_API_KEY</code> in the backend.
+        </p>
+      )}
+
+      {error && (
+        <p className="mt-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error}
+        </p>
+      )}
+
+      {answer && !error && (
+        <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+          <p className="mb-1 text-xs text-gray-500">
+            From LLM · {reportsConsidered} report{reportsConsidered === 1 ? "" : "s"} considered
+          </p>
+          <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-800">
+            {answer}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ----- Notable changes (rule-based trend insights) -----
+function InsightsPanel({
+  insights,
+  onSelect,
+}: {
+  insights: Insight[];
+  onSelect: (canonical: string, title: string) => void;
+}) {
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-3 sm:p-4">
+      <div className="mb-2 flex items-center gap-2">
+        <TrendingUp className="h-5 w-5 text-blue-600" />
+        <h2 className="text-base font-medium sm:text-lg">Notable changes</h2>
+        <span className="text-xs text-gray-400">{insights.length}</span>
+      </div>
+      <ul className="divide-y divide-gray-100">
+        {insights.map((it) => (
+          <InsightRow key={it.canonical} it={it} onSelect={onSelect} />
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function InsightRow({
+  it,
+  onSelect,
+}: {
+  it: Insight;
+  onSelect: (canonical: string, title: string) => void;
+}) {
+  const tone =
+    it.lastStatus === "bad"
+      ? "text-red-700"
+      : it.lastStatus === "mid"
+        ? "text-yellow-700"
+        : "text-emerald-700";
+  const Arrow =
+    it.direction === "up" ? TrendingUp : it.direction === "down" ? TrendingDown : ArrowRight;
+  const pct =
+    it.pctChange == null
+      ? ""
+      : `${it.pctChange > 0 ? "+" : ""}${it.pctChange.toFixed(0)}%`;
+
+  return (
+    <li>
+      <button
+        onClick={() => onSelect(it.canonical, it.testName)}
+        className="flex w-full items-center justify-between gap-3 rounded py-2 text-left hover:bg-gray-50"
+        title={`${it.firstDate} → ${it.lastDate}`}
+      >
+        <span className="flex min-w-0 items-center gap-2">
+          <Arrow className={cn("h-4 w-4 shrink-0", tone)} />
+          <span className="truncate text-sm text-gray-800">{it.testName}</span>
+        </span>
+        <span className="flex shrink-0 items-center gap-3 text-sm">
+          {pct && <span className={cn("font-medium tabular-nums", tone)}>{pct}</span>}
+          <span className="whitespace-nowrap text-gray-500 tabular-nums">
+            {it.firstValue} → {it.lastValue}
+            {it.unit ? ` ${it.unit}` : ""}
+          </span>
+        </span>
+      </button>
+    </li>
   );
 }
 

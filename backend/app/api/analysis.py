@@ -195,6 +195,45 @@ async def test_info(
     )
 
 
+_SUMMARY_QUESTION = (
+    "Summarize my most recent blood test results in plain, friendly language for a "
+    "non-expert. Use 4-7 short bullet points: call out any values outside their "
+    "reference range and whether they are high or low, note any clear trends versus "
+    "earlier results if present, and finish with a one-line overall takeaway. Do not "
+    "diagnose or give medical advice — suggest discussing concerns with a doctor. "
+    "Keep it concise and ground every statement in the numbers provided."
+)
+
+
+@router.get("/summary", response_model=AskResponse)
+async def summary(
+    last: int | None = Query(default=None, ge=1, le=20),
+    model: str | None = Query(default=None),
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(get_current_user),
+) -> AskResponse:
+    """Plain-language LLM summary of the user's most recent report(s)."""
+    provider = _provider_or_400()
+    n = last or settings.attention_window
+    reports = await _load_recent_reports(session, n, user.id)
+    if not reports:
+        raise HTTPException(status_code=404, detail="No reports to summarize")
+
+    payload = _reports_to_payload(reports)
+    answer = await llm_ask(
+        provider,
+        _SUMMARY_QUESTION,
+        payload,
+        model=model or None,
+        today=date.today(),
+    )
+    return AskResponse(
+        answer=answer,
+        reports_considered=len(reports),
+        model=model,
+    )
+
+
 @router.post("/ask", response_model=AskResponse)
 async def ask(
     body: AskRequest,

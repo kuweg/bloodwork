@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Download,
   Files,
+  GitCompareArrows,
   LayoutDashboard,
   LineChart,
   LogOut,
@@ -11,6 +12,7 @@ import {
   Upload,
 } from "lucide-react";
 import { api } from "./api/client";
+import { Compare } from "./components/Compare";
 import { Dashboard } from "./components/Dashboard";
 import { Export } from "./components/Export";
 import { Graphics } from "./components/Graphics";
@@ -25,6 +27,7 @@ type View =
   | "dashboard"
   | "table"
   | "graphics"
+  | "compare"
   | "import"
   | "source-data"
   | "export";
@@ -33,6 +36,7 @@ const TABS: { id: View; label: string; Icon: typeof LayoutDashboard }[] = [
   { id: "dashboard", label: "Dashboard", Icon: LayoutDashboard },
   { id: "table", label: "Table Viewer", Icon: TableIcon },
   { id: "graphics", label: "Graphics", Icon: LineChart },
+  { id: "compare", label: "Compare", Icon: GitCompareArrows },
   { id: "import", label: "Import", Icon: Upload },
   { id: "source-data", label: "Source data", Icon: Files },
   { id: "export", label: "Export", Icon: Download },
@@ -394,6 +398,7 @@ export default function App() {
         )}
         {view === "table" && <TableViewer reports={reports} />}
         {view === "graphics" && <Graphics reports={reports} />}
+        {view === "compare" && <Compare reports={reports} />}
         {view === "import" && (
           <Import
             canUseServerFolder={canUseServerFolder}

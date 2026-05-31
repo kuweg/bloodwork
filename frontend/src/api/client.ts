@@ -111,6 +111,14 @@ export const api = {
     });
   },
 
+  summarize(model?: string, last?: number): Promise<AskResponse> {
+    const qs = new URLSearchParams();
+    if (model) qs.set("model", model);
+    if (last) qs.set("last", String(last));
+    const suffix = qs.toString() ? `?${qs}` : "";
+    return request<AskResponse>(`/analysis/summary${suffix}`);
+  },
+
   getTestInfo(canonicalName: string): Promise<TestInfoResponse> {
     return request<TestInfoResponse>(
       `/analysis/test-info/${encodeURIComponent(canonicalName)}`,
