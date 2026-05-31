@@ -17,6 +17,8 @@ export interface TestHistory {
   testName: string;
   unit: string;
   normalRange: string;
+  refLow: number | null;
+  refHigh: number | null;
   dates: Record<string, { value: number; unit: string; status: Status }>;
 }
 
@@ -78,6 +80,8 @@ export function historyByTest(reports: Report[]): TestHistory[] {
         testName: displayName(m),
         unit: m.unit ?? "",
         normalRange: formatRange(m),
+        refLow: m.ref_low,
+        refHigh: m.ref_high,
         dates: {},
       };
       entry.dates[date] = {
@@ -85,12 +89,14 @@ export function historyByTest(reports: Report[]): TestHistory[] {
         unit: m.unit ?? entry.unit,
         status: classify(m),
       };
-      // Keep the prettiest display name and a non-empty unit / range
+      // Keep the prettiest display name and a non-empty unit / range / bounds
       if (!entry.unit && m.unit) entry.unit = m.unit;
       if (entry.normalRange === "—") {
         const r = formatRange(m);
         if (r !== "—") entry.normalRange = r;
       }
+      if (entry.refLow == null && m.ref_low != null) entry.refLow = m.ref_low;
+      if (entry.refHigh == null && m.ref_high != null) entry.refHigh = m.ref_high;
       buckets.set(m.canonical_name, entry);
     }
   }

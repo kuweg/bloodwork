@@ -6,6 +6,8 @@ import {
   Legend,
   Line,
   LineChart,
+  ReferenceArea,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -38,6 +40,42 @@ const COLORS = [
   "#14b8a6",
   "#f97316",
 ];
+
+// Emerald band marking the reference (normal) range.
+const BAND_COLOR = "#10b981";
+// Out-of-range dot colors keyed by metrics.ts status; "good" falls back to the line color.
+const STATUS_DOT: Record<string, string> = { bad: "#ef4444", mid: "#f59e0b" };
+
+/**
+ * Render a point as a colored dot — red when out of range, amber when borderline,
+ * otherwise the series color. Reads the per-point status injected into chartData.
+ */
+function statusDot(name: string, color: string) {
+  return (props: {
+    cx?: number;
+    cy?: number;
+    index?: number;
+    payload?: Record<string, number | string>;
+  }) => {
+    const { cx, cy, index, payload } = props;
+    if (cx == null || cy == null || payload?.[name] == null) {
+      return <g key={`empty-${index}`} />;
+    }
+    const status = payload[`${name}__status`] as string | undefined;
+    const fill = (status && STATUS_DOT[status]) || color;
+    return (
+      <circle
+        key={`dot-${index}`}
+        cx={cx}
+        cy={cy}
+        r={4}
+        fill={fill}
+        stroke="#fff"
+        strokeWidth={1}
+      />
+    );
+  };
+}
 
 export function Graphics({ reports }: Props) {
   const history = useMemo(() => historyByTest(reports), [reports]);
@@ -84,7 +122,10 @@ export function Graphics({ reports }: Props) {
       for (const canonical of cfg.tests) {
         const test = history.find((t) => t.canonical === canonical);
         const cell = test?.dates[date];
-        if (cell) point[test!.testName] = cell.value;
+        if (cell) {
+          point[test!.testName] = cell.value;
+          point[`${test!.testName}__status`] = cell.status;
+        }
       }
       return point;
     });
@@ -233,6 +274,13 @@ export function Graphics({ reports }: Props) {
             const testNames = chart.tests.map(
               (c) => history.find((t) => t.canonical === c)?.testName ?? c,
             );
+            // Reference-range band only makes sense for a single test on a line
+            // chart (different tests have different ranges/units).
+            const band =
+              chart.type === "line" && chart.tests.length === 1
+                ? (history.find((t) => t.canonical === chart.tests[0]) ?? null)
+                : null;
+            const hasBand = !!band && (band.refLow != null || band.refHigh != null);
             return (
               <div
                 key={chart.id}
@@ -244,6 +292,12 @@ export function Graphics({ reports }: Props) {
                     <p className="text-sm text-gray-600">
                       {chart.type === "line" ? "Line Chart" : "Bar Chart"}
                     </p>
+                    {hasBand && (
+                      <p className="mt-0.5 text-xs text-emerald-700">
+                        Shaded band = normal range ({band!.normalRange}
+                        {band!.unit ? ` ${band!.unit}` : ""})
+                      </p>
+                    )}
                   </div>
                   <button
                     onClick={() => removeChart(chart.id)}
@@ -262,6 +316,43 @@ export function Graphics({ reports }: Props) {
                       <YAxis />
                       <Tooltip />
                       <Legend />
+                      {band?.refLow != null && band?.refHigh != null && (
+                        <ReferenceArea
+                          y1={band.refLow}
+                          y2={band.refHigh}
+                          fill={BAND_COLOR}
+                          fillOpacity={0.1}
+                          ifOverflow="extendDomain"
+                        />
+                      )}
+                      {band?.refHigh != null && (
+                        <ReferenceLine
+                          y={band.refHigh}
+                          stroke={BAND_COLOR}
+                          strokeDasharray="4 4"
+                          ifOverflow="extendDomain"
+                          label={{
+                            value: String(band.refHigh),
+                            position: "right",
+                            fill: BAND_COLOR,
+                            fontSize: 11,
+                          }}
+                        />
+                      )}
+                      {band?.refLow != null && (
+                        <ReferenceLine
+                          y={band.refLow}
+                          stroke={BAND_COLOR}
+                          strokeDasharray="4 4"
+                          ifOverflow="extendDomain"
+                          label={{
+                            value: String(band.refLow),
+                            position: "right",
+                            fill: BAND_COLOR,
+                            fontSize: 11,
+                          }}
+                        />
+                      )}
                       {testNames.map((name, idx) => (
                         <Line
                           key={`${chart.id}-l-${name}`}
@@ -269,7 +360,8 @@ export function Graphics({ reports }: Props) {
                           dataKey={name}
                           stroke={COLORS[idx % COLORS.length]}
                           strokeWidth={2}
-                          dot={{ r: 4 }}
+                          dot={statusDot(name, COLORS[idx % COLORS.length])}
+                          activeDot={{ r: 5 }}
                           connectNulls
                         />
                       ))}
