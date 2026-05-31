@@ -119,6 +119,13 @@ export default function App() {
     localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
 
+  // Views stay mounted (hidden) so their state survives tab switches; nudge a
+  // resize so size-aware views (table scroll shadows, charts) re-measure on show.
+  useEffect(() => {
+    const id = window.setTimeout(() => window.dispatchEvent(new Event("resize")), 0);
+    return () => window.clearTimeout(id);
+  }, [view]);
+
   useEffect(() => {
     void (async () => {
       setAuthLoading(true);
@@ -387,7 +394,7 @@ export default function App() {
             {error}
           </p>
         )}
-        {view === "dashboard" && (
+        <div className={cn(view !== "dashboard" && "hidden")}>
           <Dashboard
             reports={reports}
             attention={attention}
@@ -395,11 +402,17 @@ export default function App() {
             attentionError={attentionError}
             refreshAttention={refreshAttention}
           />
-        )}
-        {view === "table" && <TableViewer reports={reports} />}
-        {view === "graphics" && <Graphics reports={reports} />}
-        {view === "compare" && <Compare reports={reports} />}
-        {view === "import" && (
+        </div>
+        <div className={cn(view !== "table" && "hidden")}>
+          <TableViewer reports={reports} />
+        </div>
+        <div className={cn(view !== "graphics" && "hidden")}>
+          <Graphics reports={reports} />
+        </div>
+        <div className={cn(view !== "compare" && "hidden")}>
+          <Compare reports={reports} />
+        </div>
+        <div className={cn(view !== "import" && "hidden")}>
           <Import
             canUseServerFolder={canUseServerFolder}
             concurrency={importController.concurrency}
@@ -417,9 +430,13 @@ export default function App() {
             stopAll={importController.stopAll}
             clearFinished={importController.clearFinished}
           />
-        )}
-        {view === "source-data" && <SourceData reports={reports} />}
-        {view === "export" && <Export reports={reports} />}
+        </div>
+        <div className={cn(view !== "source-data" && "hidden")}>
+          <SourceData reports={reports} />
+        </div>
+        <div className={cn(view !== "export" && "hidden")}>
+          <Export reports={reports} />
+        </div>
       </main>
     </div>
   );

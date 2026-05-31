@@ -1,24 +1,24 @@
 /**
- * Rule-based "notable changes" detector: flag tests that moved a lot between the
- * earliest and latest reading, or that ended up out of range. Frontend-only —
- * works off the same historyByTest pivot the charts/table use.
+ * Rule-based "notable changes" detector comparing the two most recent reports:
+ * flag tests that moved a lot between the previous and latest analysis, got worse,
+ * or are currently out of range. Frontend-only.
  */
-import type { Report } from "../types/bloodwork";
-import { historyByTest } from "./data";
-import type { Status } from "./metrics";
+import type { Measurement, Report } from "../types/bloodwork";
+import { classify, type Status } from "./metrics";
 
 export interface Insight {
   canonical: string;
   testName: string;
   unit: string;
-  firstValue: number;
+  prevValue: number | null; // null when the test wasn't in the previous report
   lastValue: number;
-  firstDate: string;
+  prevDate: string | null;
   lastDate: string;
-  pctChange: number | null; // null when the first value is 0
+  pctChange: number | null; // null when no previous value or previous value is 0
   direction: "up" | "down" | "flat";
   lastStatus: Status;
-  worsened: boolean; // ended worse than it started
+  worsened: boolean; // ended worse than the previous report
+  hasPrevious: boolean;
 }
 
 export interface InsightOptions {
@@ -28,45 +28,64 @@ export interface InsightOptions {
 
 const SEVERITY: Record<Status, number> = { bad: 2, mid: 1, good: 0 };
 
+function reportDate(r: Report): string {
+  return r.collected_at ?? r.uploaded_at.slice(0, 10);
+}
+
+function displayName(m: Measurement): string {
+  return m.display_name?.trim() || m.raw_name?.trim() || m.canonical_name;
+}
+
 export function computeInsights(
   reports: Report[],
   opts: InsightOptions = {},
 ): Insight[] {
   const minPct = opts.minPct ?? 15;
-  const history = historyByTest(reports);
+  if (reports.length === 0) return [];
+
+  // The two most recent reports by date (latest, and the one before it).
+  const ordered = [...reports].sort((a, b) =>
+    reportDate(a).localeCompare(reportDate(b)),
+  );
+  const latest = ordered[ordered.length - 1];
+  const prev = ordered.length >= 2 ? ordered[ordered.length - 2] : null;
+  const prevMap = new Map(
+    (prev?.measurements ?? []).map((m) => [m.canonical_name, m]),
+  );
+
   const insights: Insight[] = [];
+  for (const m of latest.measurements) {
+    const pm = prevMap.get(m.canonical_name);
+    const lastValue = m.value;
+    const lastStatus = classify(m);
+    const prevValue = pm ? pm.value : null;
+    const prevStatus = pm ? classify(pm) : lastStatus;
 
-  for (const t of history) {
-    const dates = Object.keys(t.dates).sort();
-    if (dates.length < 2) continue;
-
-    const firstDate = dates[0];
-    const lastDate = dates[dates.length - 1];
-    const first = t.dates[firstDate];
-    const last = t.dates[lastDate];
-
-    const delta = last.value - first.value;
-    const pct = first.value !== 0 ? (delta / Math.abs(first.value)) * 100 : null;
-    const direction = delta > 0 ? "up" : delta < 0 ? "down" : "flat";
-    const worsened = SEVERITY[last.status] > SEVERITY[first.status];
+    const delta = prevValue != null ? lastValue - prevValue : null;
+    const pct =
+      delta != null && prevValue != null && prevValue !== 0
+        ? (delta / Math.abs(prevValue)) * 100
+        : null;
+    const direction = delta == null || delta === 0 ? "flat" : delta > 0 ? "up" : "down";
+    const worsened = SEVERITY[lastStatus] > SEVERITY[prevStatus];
 
     const bigMove = pct != null && Math.abs(pct) >= minPct;
-    const outOfRange = last.status !== "good";
-    // Surface a test if it moved a lot, got worse, or is currently out of range.
+    const outOfRange = lastStatus !== "good";
     if (!bigMove && !worsened && !outOfRange) continue;
 
     insights.push({
-      canonical: t.canonical,
-      testName: t.testName,
-      unit: t.unit,
-      firstValue: first.value,
-      lastValue: last.value,
-      firstDate,
-      lastDate,
+      canonical: m.canonical_name,
+      testName: displayName(m),
+      unit: m.unit ?? "",
+      prevValue,
+      lastValue,
+      prevDate: prev ? reportDate(prev) : null,
+      lastDate: reportDate(latest),
       pctChange: pct,
       direction,
-      lastStatus: last.status,
+      lastStatus,
       worsened,
+      hasPrevious: pm != null,
     });
   }
 

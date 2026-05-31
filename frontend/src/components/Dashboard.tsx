@@ -29,6 +29,7 @@ import { groupByPanel } from "../lib/panels";
 import { computeInsights, type Insight } from "../lib/insights";
 import type { Status } from "../lib/metrics";
 import { cn } from "../lib/utils";
+import { Markdown } from "./Markdown";
 
 interface Props {
   reports: Report[];
@@ -436,9 +437,7 @@ function ChatBar({ providers }: { providers: ProviderInfo | null }) {
               <X className="h-4 w-4" />
             </button>
           </div>
-          <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-800">
-            {answer}
-          </p>
+          <Markdown text={answer} />
         </div>
       )}
     </div>
@@ -514,9 +513,7 @@ function SummaryPanel({
           <p className="mb-1 text-xs text-gray-500">
             From LLM · {reportsConsidered} report{reportsConsidered === 1 ? "" : "s"} considered
           </p>
-          <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-800">
-            {answer}
-          </p>
+          <Markdown text={answer} />
         </div>
       )}
     </div>
@@ -572,18 +569,32 @@ function InsightRow({
       <button
         onClick={() => onSelect(it.canonical, it.testName)}
         className="flex w-full items-center justify-between gap-3 rounded py-2 text-left hover:bg-gray-50"
-        title={`${it.firstDate} → ${it.lastDate}`}
+        title={it.prevDate ? `${it.prevDate} → ${it.lastDate}` : it.lastDate}
       >
         <span className="flex min-w-0 items-center gap-2">
           <Arrow className={cn("h-4 w-4 shrink-0", tone)} />
           <span className="truncate text-sm text-gray-800">{it.testName}</span>
         </span>
         <span className="flex shrink-0 items-center gap-3 text-sm">
-          {pct && <span className={cn("font-medium tabular-nums", tone)}>{pct}</span>}
-          <span className="whitespace-nowrap text-gray-500 tabular-nums">
-            {it.firstValue} → {it.lastValue}
-            {it.unit ? ` ${it.unit}` : ""}
-          </span>
+          {it.hasPrevious ? (
+            <>
+              {pct && <span className={cn("font-medium tabular-nums", tone)}>{pct}</span>}
+              <span className="whitespace-nowrap text-gray-500 tabular-nums">
+                {it.prevValue} → {it.lastValue}
+                {it.unit ? ` ${it.unit}` : ""}
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="rounded bg-blue-50 px-1.5 py-0.5 text-xs text-blue-700">
+                new
+              </span>
+              <span className={cn("whitespace-nowrap font-medium tabular-nums", tone)}>
+                {it.lastValue}
+                {it.unit ? ` ${it.unit}` : ""}
+              </span>
+            </>
+          )}
         </span>
       </button>
     </li>
