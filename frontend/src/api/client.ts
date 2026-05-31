@@ -6,10 +6,18 @@ import type {
   DataDirectoryListing,
   IngestFileResult,
   IngestSummary,
+  Measurement,
   ProviderInfo,
   Report,
   TestInfoResponse,
 } from "../types/bloodwork";
+
+export interface MeasurementPatch {
+  value?: number;
+  unit?: string | null;
+  ref_low?: number | null;
+  ref_high?: number | null;
+}
 
 const BASE = "/api";
 
@@ -127,6 +135,18 @@ export const api = {
 
   listReports(): Promise<Report[]> {
     return request<Report[]>("/results/reports");
+  },
+
+  updateMeasurement(id: number, patch: MeasurementPatch): Promise<Measurement> {
+    return request<Measurement>(`/results/measurements/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(patch),
+    });
+  },
+
+  deleteReport(id: number): Promise<void> {
+    return request<void>(`/results/reports/${id}`, { method: "DELETE" });
   },
 
   reportPdfUrl(reportId: number): string {

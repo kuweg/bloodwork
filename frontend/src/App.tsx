@@ -432,7 +432,7 @@ export default function App() {
           />
         </div>
         <div className={cn(view !== "source-data" && "hidden")}>
-          <SourceData reports={reports} />
+          <SourceData reports={reports} onChanged={refresh} />
         </div>
         <div className={cn(view !== "export" && "hidden")}>
           <Export reports={reports} />

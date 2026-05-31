@@ -17,6 +17,15 @@ class MeasurementRead(BaseModel):
     taken_at: date | None
 
 
+class MeasurementUpdate(BaseModel):
+    """Partial update for a single measurement; only set fields are applied."""
+
+    value: float | None = None
+    unit: str | None = None
+    ref_low: float | None = None
+    ref_high: float | None = None
+
+
 class ReportRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
