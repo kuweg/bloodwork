@@ -338,6 +338,11 @@ export default function App() {
               ? "Need an account? Register"
               : "Have an account? Sign in"}
           </button>
+
+          <p className="mt-4 border-t border-gray-100 pt-3 text-center text-xs text-gray-500">
+            Your reports are private to your account. To read values from a PDF,
+            its text is sent to an AI provider for extraction.
+          </p>
         </div>
       </div>
     );
@@ -421,6 +426,7 @@ export default function App() {
             refreshAttention={refreshAttention}
             annotations={annotations}
             refreshAnnotations={refreshAnnotations}
+            onUpload={() => setView("import")}
           />
         </div>
         <div className={cn(view !== "table" && "hidden")}>

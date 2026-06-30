@@ -26,7 +26,7 @@ export interface InsightOptions {
   limit?: number;
 }
 
-const SEVERITY: Record<Status, number> = { bad: 2, mid: 1, good: 0 };
+const SEVERITY: Record<Status, number> = { bad: 2, mid: 1, good: 0, unknown: 0 };
 
 function reportDate(r: Report): string {
   return r.collected_at ?? r.uploaded_at.slice(0, 10);
@@ -34,6 +34,16 @@ function reportDate(r: Report): string {
 
 function displayName(m: Measurement): string {
   return m.display_name?.trim() || m.raw_name?.trim() || m.canonical_name;
+}
+
+/**
+ * Two readings are only comparable as a "trend" if they share a unit. Comparing
+ * a percentage against an absolute count (e.g. a mis-normalized "Lymphocytes %"
+ * vs "Lymphocytes #") produces a meaningless, alarming swing — never do it.
+ */
+function sameUnit(a: string | null, b: string | null): boolean {
+  const norm = (u: string | null) => (u ?? "").trim().toLowerCase().replace(/\s+/g, "");
+  return norm(a) === norm(b);
 }
 
 export function computeInsights(
@@ -55,7 +65,11 @@ export function computeInsights(
 
   const insights: Insight[] = [];
   for (const m of latest.measurements) {
-    const pm = prevMap.get(m.canonical_name);
+    const pmRaw = prevMap.get(m.canonical_name);
+    // Only treat the previous reading as a comparable baseline when its unit
+    // matches; otherwise we'd report a fake percentage change between two
+    // different quantities.
+    const pm = pmRaw && sameUnit(pmRaw.unit, m.unit) ? pmRaw : undefined;
     const lastValue = m.value;
     const lastStatus = classify(m);
     const prevValue = pm ? pm.value : null;
@@ -70,7 +84,8 @@ export function computeInsights(
     const worsened = SEVERITY[lastStatus] > SEVERITY[prevStatus];
 
     const bigMove = pct != null && Math.abs(pct) >= minPct;
-    const outOfRange = lastStatus !== "good";
+    // "unknown" (no reference range) is not out of range — don't flag it as one.
+    const outOfRange = lastStatus === "bad" || lastStatus === "mid";
     if (!bigMove && !worsened && !outOfRange) continue;
 
     insights.push({

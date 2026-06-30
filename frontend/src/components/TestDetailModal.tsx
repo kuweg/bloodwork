@@ -26,6 +26,7 @@ const STATUS_BADGE: Record<Status, string> = {
   good: "bg-green-100 text-green-800",
   mid: "bg-yellow-100 text-yellow-800",
   bad: "bg-red-100 text-red-800",
+  unknown: "bg-gray-100 text-gray-600",
 };
 const BAND_COLOR = "#10b981";
 

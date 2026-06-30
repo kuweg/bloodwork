@@ -8,6 +8,7 @@ import {
   Gauge,
   Info,
   Loader2,
+  MinusCircle,
   Plus,
   RefreshCw,
   Send,
@@ -15,6 +16,7 @@ import {
   Trash2,
   TrendingDown,
   TrendingUp,
+  Upload,
   X,
 } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, YAxis } from "recharts";
@@ -45,6 +47,7 @@ interface Props {
   refreshAttention: () => Promise<AttentionResult>;
   annotations: Annotation[];
   refreshAnnotations: () => Promise<void>;
+  onUpload: () => void;
 }
 
 export function Dashboard({
@@ -55,6 +58,7 @@ export function Dashboard({
   refreshAttention,
   annotations,
   refreshAnnotations,
+  onUpload,
 }: Props) {
   const [selected, setSelected] = useState<"all" | Status>("all");
   const [providers, setProviders] = useState<ProviderInfo | null>(null);
@@ -106,6 +110,13 @@ export function Dashboard({
           <p className="mt-1 text-gray-600">
             Upload a PDF lab report to see your dashboard.
           </p>
+          <button
+            onClick={onUpload}
+            className="mx-auto mt-5 flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+          >
+            <Upload className="h-4 w-4" />
+            Upload your first report
+          </button>
         </div>
       </div>
     );
@@ -312,9 +323,17 @@ function SummaryCard({
       big: "text-red-800",
       hint: "text-red-800/70",
     },
+    unknown: {
+      bg: "bg-gray-50",
+      border: "border-gray-200",
+      fg: "text-gray-600",
+      icon: "text-gray-500",
+      big: "text-gray-700",
+      hint: "text-gray-600/70",
+    },
   };
   const p = palette[tone];
-  const Icon = tone === "good" ? CheckCircle : AlertCircle;
+  const Icon = tone === "good" ? CheckCircle : tone === "unknown" ? MinusCircle : AlertCircle;
 
   return (
     <div
@@ -348,8 +367,14 @@ function SummaryCard({
 
 function StatusIcon({ status }: { status: Status }) {
   const color =
-    status === "good" ? "bg-green-500" : status === "mid" ? "bg-yellow-500" : "bg-red-500";
-  const Icon = status === "good" ? CheckCircle : AlertCircle;
+    status === "good"
+      ? "bg-green-500"
+      : status === "mid"
+        ? "bg-yellow-500"
+        : status === "unknown"
+          ? "bg-gray-400"
+          : "bg-red-500";
+  const Icon = status === "good" ? CheckCircle : status === "unknown" ? MinusCircle : AlertCircle;
   return (
     <div className={cn("rounded-full p-2 text-white", color)}>
       <Icon className="h-5 w-5" />

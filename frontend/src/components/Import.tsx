@@ -103,7 +103,7 @@ export function Import({
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <section className="rounded-lg border border-gray-200 bg-white p-4 sm:p-5">
-          <h2 className="mb-3 text-lg">Concurrency</h2>
+          <h2 className="mb-3 text-lg">Upload speed</h2>
           <select
             value={concurrency}
             onChange={(e) =>
@@ -113,13 +113,12 @@ export function Import({
           >
             {CONCURRENCY_OPTIONS.map((n) => (
               <option key={n} value={n}>
-                {n} {n === 1 ? "file" : "files"} in parallel
+                {n} {n === 1 ? "file" : "files"} at a time
               </option>
             ))}
           </select>
           <p className="mt-2 text-xs text-gray-500">
-            Default set via{" "}
-            <code className="rounded bg-gray-100 px-1">VITE_DEFAULT_CONCURRENCY</code>.
+            How many reports to process at once. Lower this if uploads time out.
           </p>
         </section>
 
@@ -142,6 +141,10 @@ export function Import({
           onDrop={onDrop}
           onPick={onPick}
         />
+        <p className="mt-3 text-xs text-gray-500">
+          To read your results, each report's text is sent to an AI provider for
+          extraction. Reports stay private to your account.
+        </p>
       </section>
 
       {canUseServerFolder && (

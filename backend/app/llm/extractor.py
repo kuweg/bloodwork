@@ -44,11 +44,23 @@ Canonical name guidelines:
 - Translate, de-abbreviate, and standardize as needed (e.g. HGB -> Hemoglobin;
   Eritrociti -> Red Blood Cells; Тромбоциты -> Platelets; LDL kolesterol -> LDL Cholesterol).
 - Keep the same canonical_name for the same test across any language or lab.
-- If a test is obscure and you are unsure, pick the most natural English phrase; consistency matters more than perfection.
+- If a test is obscure and you are unsure, pick the most natural English phrase;
+  consistency matters more than perfection.
+
+Consistency rules (critical — the same analyte MUST get the exact same canonical_name every time):
+- Distinguish a percentage from an absolute count explicitly and consistently:
+  use "<Cell> %" for the percentage and "<Cell> Absolute" for the absolute count
+  (e.g. "Lymphocytes %" vs "Lymphocytes Absolute"; "Neutrophils %" vs "Neutrophils Absolute").
+  Never output a bare "Lymphocytes" or a "#" suffix.
+- For total testosterone use exactly "Testosterone" (not "Total Testosterone").
+  Use "Free Testosterone" only for the free fraction.
+- Keep a qualifier only when it changes the analyte: "Total Bilirubin" vs "Direct
+  Bilirubin", "HDL Cholesterol" vs "LDL Cholesterol" — keep those distinct.
 
 Other rules:
 - Include every measurement with a numeric value. Skip qualitative results ("negative", "positive").
-- "<X" -> ref_high=X, ref_low=null. ">X" -> ref_low=X, ref_high=null. "X-Y" -> ref_low=X, ref_high=Y.
+- "<X" -> ref_high=X, ref_low=null. ">X" -> ref_low=X, ref_high=null.
+  "X-Y" -> ref_low=X, ref_high=Y.
 - Convert comma decimals (4,2) to dot decimals (4.2).
 - Use null for missing/unclear fields. Never invent values.
 - Return ONE JSON object. No prose, no markdown fences.

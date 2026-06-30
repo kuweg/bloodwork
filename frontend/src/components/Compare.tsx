@@ -25,10 +25,16 @@ const STATUS_TONE: Record<Status, string> = {
   good: "text-emerald-700",
   mid: "text-yellow-700",
   bad: "text-red-700",
+  unknown: "text-gray-500",
 };
 
 function reportDate(r: Report): string {
   return r.collected_at ?? r.uploaded_at.slice(0, 10);
+}
+
+function sameUnit(a: string | null | undefined, b: string | null | undefined): boolean {
+  const norm = (u: string | null | undefined) => (u ?? "").trim().toLowerCase().replace(/\s+/g, "");
+  return norm(a) === norm(b);
 }
 
 function pickName(...ms: (Measurement | undefined)[]): string {
@@ -70,9 +76,12 @@ export function Compare({ reports }: Props) {
       const mb = mapB.get(canonical);
       const valA = ma?.value ?? null;
       const valB = mb?.value ?? null;
-      const delta = valA != null && valB != null ? valB - valA : null;
+      // Only show a change when both readings share a unit — never subtract a
+      // percentage from an absolute count.
+      const comparable = ma != null && mb != null && sameUnit(ma.unit, mb.unit);
+      const delta = comparable && valA != null && valB != null ? valB - valA : null;
       const pct = delta != null && valA !== 0 && valA != null ? (delta / Math.abs(valA)) * 100 : null;
-      const status = mb ? classify(mb) : ma ? classify(ma) : "good";
+      const status = mb ? classify(mb) : ma ? classify(ma) : "unknown";
       return {
         canonical,
         name: pickName(mb, ma),

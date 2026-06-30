@@ -13,7 +13,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Plus, Trash2, X } from "lucide-react";
+import { Plus, Sparkles, Trash2, X } from "lucide-react";
 import type { Annotation, Report } from "../types/bloodwork";
 import { formatIsoLikeDate } from "../lib/date";
 import { historyByTest } from "../lib/data";
@@ -111,6 +111,32 @@ export function Graphics({ reports, annotations }: Props) {
 
   const removeChart = (id: string) => setCharts(charts.filter((c) => c.id !== id));
 
+  // Tests worth charting on first visit: out-of-range/borderline and seen on at
+  // least two dates (so there's an actual trend to look at).
+  const suggested = useMemo(
+    () =>
+      history.filter(
+        (t) =>
+          Object.keys(t.dates).length >= 2 &&
+          Object.values(t.dates).some((d) => d.status === "bad" || d.status === "mid"),
+      ),
+    [history],
+  );
+
+  const addSuggestedCharts = () => {
+    const picks = suggested.slice(0, 8);
+    if (!picks.length) return;
+    setCharts([
+      ...charts,
+      ...picks.map((t, i) => ({
+        id: `${Date.now()}-${i}`,
+        type: "line" as const,
+        tests: [t.canonical],
+        dateRange: [],
+      })),
+    ]);
+  };
+
   const chartData = (cfg: ChartConfig, events: Annotation[] = []) => {
     const baseDates = cfg.dateRange.length ? cfg.dateRange : allDates;
     // Inject event dates as categories so their markers align on the axis.
@@ -147,14 +173,25 @@ export function Graphics({ reports, annotations }: Props) {
     <div className="p-4 sm:p-6">
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl sm:text-3xl">Blood Work Graphics</h1>
-        <button
-          onClick={() => setShowAdd(true)}
-          disabled={history.length === 0}
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300 sm:w-auto"
-        >
-          <Plus className="h-5 w-5" />
-          Add Chart
-        </button>
+        <div className="flex w-full gap-2 sm:w-auto">
+          {suggested.length > 0 && (
+            <button
+              onClick={addSuggestedCharts}
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-blue-600 px-4 py-2 text-blue-700 transition-colors hover:bg-blue-50 sm:w-auto"
+            >
+              <Sparkles className="h-5 w-5" />
+              Suggest charts ({suggested.length})
+            </button>
+          )}
+          <button
+            onClick={() => setShowAdd(true)}
+            disabled={history.length === 0}
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300 sm:w-auto"
+          >
+            <Plus className="h-5 w-5" />
+            Add Chart
+          </button>
+        </div>
       </div>
 
       {showAdd && (
@@ -268,8 +305,19 @@ export function Graphics({ reports, annotations }: Props) {
           <p className="text-sm">
             {history.length === 0
               ? "Upload a report first to enable chart creation."
-              : 'Click "Add Chart" to create your first visualization'}
+              : suggested.length > 0
+                ? 'Click "Suggest charts" to plot your flagged tests, or "Add Chart" to pick your own.'
+                : 'Click "Add Chart" to create your first visualization'}
           </p>
+          {suggested.length > 0 && (
+            <button
+              onClick={addSuggestedCharts}
+              className="mx-auto mt-5 flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+            >
+              <Sparkles className="h-4 w-4" />
+              Suggest charts for my flagged tests
+            </button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
