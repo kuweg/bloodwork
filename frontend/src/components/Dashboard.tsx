@@ -590,7 +590,7 @@ function InsightRow({
       >
         <span className="flex min-w-0 items-center gap-2">
           <Arrow className={cn("h-4 w-4 shrink-0", tone)} />
-          <span className="truncate text-sm text-gray-800">{it.testName}</span>
+          <span className="min-w-0 truncate text-sm text-gray-800">{it.testName}</span>
         </span>
         <span className="flex shrink-0 items-center gap-3 text-sm">
           {it.hasPrevious ? (
@@ -765,7 +765,7 @@ function EventsPanel({
                 <span className="shrink-0 tabular-nums text-xs text-gray-500">
                   {formatIsoLikeDate(a.date, { year: "numeric", month: "short", day: "numeric" })}
                 </span>
-                <span className="truncate text-gray-800">{a.label}</span>
+                <span className="min-w-0 truncate text-gray-800">{a.label}</span>
               </span>
               <button
                 onClick={() => void remove(a.id)}
