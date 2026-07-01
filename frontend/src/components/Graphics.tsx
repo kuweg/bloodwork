@@ -13,10 +13,11 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Plus, Sparkles, Trash2, X } from "lucide-react";
+import { Plus, Trash2, TrendingUp, X } from "lucide-react";
 import type { Annotation, Report } from "../types/bloodwork";
 import { formatIsoLikeDate } from "../lib/date";
 import { historyByTest } from "../lib/data";
+import { groupByPanel } from "../lib/panels";
 import { ANNOTATION_COLOR, annotationsInRange } from "../lib/annotations";
 import { cn } from "../lib/utils";
 
@@ -111,20 +112,28 @@ export function Graphics({ reports, annotations }: Props) {
 
   const removeChart = (id: string) => setCharts(charts.filter((c) => c.id !== id));
 
-  // Tests worth charting on first visit: out-of-range/borderline and seen on at
-  // least two dates (so there's an actual trend to look at).
-  const suggested = useMemo(
+  // Tests worth charting: those with an actual trend (seen on ≥2 dates), ranked
+  // by how much data they have — most distinct dates first. Data richness, not
+  // abnormal values, drives the default chart set.
+  const chartable = useMemo(
     () =>
-      history.filter(
-        (t) =>
-          Object.keys(t.dates).length >= 2 &&
-          Object.values(t.dates).some((d) => d.status === "bad" || d.status === "mid"),
-      ),
+      history
+        .filter((t) => Object.keys(t.dates).length >= 2)
+        .sort(
+          (a, b) =>
+            Object.keys(b.dates).length - Object.keys(a.dates).length ||
+            a.testName.localeCompare(b.testName),
+        ),
     [history],
   );
 
-  const addSuggestedCharts = () => {
-    const picks = suggested.slice(0, 8);
+  // One line chart per test type, richest first. Skips tests already charted on
+  // their own so a second click doesn't create duplicates.
+  const addAllCharts = () => {
+    const existing = new Set(
+      charts.filter((c) => c.tests.length === 1).map((c) => c.tests[0]),
+    );
+    const picks = chartable.filter((t) => !existing.has(t.canonical));
     if (!picks.length) return;
     setCharts([
       ...charts,
@@ -174,13 +183,13 @@ export function Graphics({ reports, annotations }: Props) {
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl sm:text-3xl">Blood Work Graphics</h1>
         <div className="flex w-full gap-2 sm:w-auto">
-          {suggested.length > 0 && (
+          {chartable.length > 0 && (
             <button
-              onClick={addSuggestedCharts}
+              onClick={addAllCharts}
               className="flex w-full items-center justify-center gap-2 rounded-lg border border-blue-600 px-4 py-2 text-blue-700 transition-colors hover:bg-blue-50 sm:w-auto"
             >
-              <Sparkles className="h-5 w-5" />
-              Suggest charts ({suggested.length})
+              <TrendingUp className="h-5 w-5" />
+              Chart my tests ({chartable.length})
             </button>
           )}
           <button
@@ -305,23 +314,36 @@ export function Graphics({ reports, annotations }: Props) {
           <p className="text-sm">
             {history.length === 0
               ? "Upload a report first to enable chart creation."
-              : suggested.length > 0
-                ? 'Click "Suggest charts" to plot your flagged tests, or "Add Chart" to pick your own.'
+              : chartable.length > 0
+                ? 'Click "Chart my tests" to plot the tests with the most data, or "Add Chart" to pick your own.'
                 : 'Click "Add Chart" to create your first visualization'}
           </p>
-          {suggested.length > 0 && (
+          {chartable.length > 0 && (
             <button
-              onClick={addSuggestedCharts}
+              onClick={addAllCharts}
               className="mx-auto mt-5 flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
             >
-              <Sparkles className="h-4 w-4" />
-              Suggest charts for my flagged tests
+              <TrendingUp className="h-4 w-4" />
+              Chart my tests with the most data
             </button>
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {charts.map((chart) => {
+        <div className="flex flex-col gap-8">
+          {groupByPanel(charts, (c) =>
+            c.tests.length === 1
+              ? {
+                  canonical: c.tests[0],
+                  name: history.find((t) => t.canonical === c.tests[0])?.testName,
+                }
+              : { canonical: "__comparison__", name: "" },
+          ).map(({ panel, items }) => (
+            <section key={panel}>
+              <h2 className="mb-4 border-b border-gray-200 pb-2 text-lg font-medium text-gray-700">
+                {panel}
+              </h2>
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                {items.map((chart) => {
             const baseDates = chart.dateRange.length ? chart.dateRange : allDates;
             const events =
               chart.type === "line"
@@ -463,8 +485,11 @@ export function Graphics({ reports, annotations }: Props) {
                   )}
                 </ResponsiveContainer>
               </div>
-            );
-          })}
+                  );
+                })}
+              </div>
+            </section>
+          ))}
         </div>
       )}
     </div>
